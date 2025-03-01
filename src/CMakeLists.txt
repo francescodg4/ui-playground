@@ -2,6 +2,7 @@ qt_add_executable(pda
   main.cpp
   Icons.cpp Icons.hpp
   PdaWindow.cpp PdaWindow.hpp
+  PhotoLibrary.cpp PhotoLibrary.hpp
   Theme.cpp Theme.hpp
   pages/BlueprintsPage.cpp pages/BlueprintsPage.hpp
   pages/InventoryPage.cpp pages/InventoryPage.hpp
