@@ -1,5 +1,6 @@
 qt_add_executable(pda
   main.cpp
+  Icons.cpp Icons.hpp
   Theme.cpp Theme.hpp
 )
 
