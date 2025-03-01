@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <QWidget>
 
+class PhotoLibrary;
 class QStackedWidget;
 class TabBar;
 
@@ -13,7 +14,7 @@ class TabBar;
 class PdaWindow : public QWidget {
     Q_OBJECT
 public:
-    explicit PdaWindow(QWidget* parent = nullptr);
+    explicit PdaWindow(PhotoLibrary* photos, QWidget* parent = nullptr);
 
     int pageCount() const;
     int currentPage() const;

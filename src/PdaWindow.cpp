@@ -3,6 +3,7 @@
 #include "Theme.hpp"
 #include "pages/BlueprintsPage.hpp"
 #include "pages/InventoryPage.hpp"
+#include "pages/PhotoPage.hpp"
 #include "pages/PingPage.hpp"
 #include "widgets/Holo.hpp"
 #include "widgets/TabBar.hpp"
@@ -29,7 +30,7 @@ QWidget* placeholder(const QString& title)
 }
 }
 
-PdaWindow::PdaWindow(QWidget* parent)
+PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
     : QWidget(parent)
 {
     setWindowTitle(tr("PDA"));
@@ -47,7 +48,7 @@ PdaWindow::PdaWindow(QWidget* parent)
     addPage(Icon::Person, tr("Inventory"), new InventoryPage);
     addPage(Icon::Wrench, tr("Blueprints"), new BlueprintsPage);
     addPage(Icon::Pin, tr("Ping Manager"), new PingPage);
-    addPage(Icon::Image, tr("Photo Manager"), placeholder(tr("Photo Manager")));
+    addPage(Icon::Image, tr("Photo Manager"), new PhotoPage(photos));
     addPage(Icon::Doc, tr("Log"), placeholder(tr("Log")));
     addPage(Icon::Book, tr("Encyclopedia"), placeholder(tr("Encyclopedia")));
     m_tabs->setBadge(1, 1);
