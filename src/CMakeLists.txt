@@ -1,7 +1,10 @@
 qt_add_executable(pda
   main.cpp
   Icons.cpp Icons.hpp
+  PdaWindow.cpp PdaWindow.hpp
   Theme.cpp Theme.hpp
+  widgets/Holo.cpp widgets/Holo.hpp
+  widgets/TabBar.cpp widgets/TabBar.hpp
 )
 
 target_include_directories(pda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

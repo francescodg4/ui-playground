@@ -1,7 +1,7 @@
+#include "PdaWindow.hpp"
 #include "Theme.hpp"
 
 #include <QApplication>
-#include <QWidget>
 
 int main(int argc, char* argv[])
 {
@@ -14,8 +14,7 @@ int main(int argc, char* argv[])
     font.setPointSizeF(10);
     QApplication::setFont(font);
 
-    QWidget window;
-    window.setWindowTitle(QStringLiteral("PDA"));
+    PdaWindow window;
     window.resize(1100, 640);
     window.show();
     return app.exec();
