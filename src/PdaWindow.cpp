@@ -1,6 +1,7 @@
 #include "PdaWindow.hpp"
 
 #include "Theme.hpp"
+#include "pages/BlueprintsPage.hpp"
 #include "pages/InventoryPage.hpp"
 #include "widgets/Holo.hpp"
 #include "widgets/TabBar.hpp"
@@ -43,7 +44,7 @@ PdaWindow::PdaWindow(QWidget* parent)
     layout->addWidget(m_stack, 1);
 
     addPage(Icon::Person, tr("Inventory"), new InventoryPage);
-    addPage(Icon::Wrench, tr("Blueprints"), placeholder(tr("Blueprints")));
+    addPage(Icon::Wrench, tr("Blueprints"), new BlueprintsPage);
     addPage(Icon::Pin, tr("Ping Manager"), placeholder(tr("Ping Manager")));
     addPage(Icon::Image, tr("Photo Manager"), placeholder(tr("Photo Manager")));
     addPage(Icon::Doc, tr("Log"), placeholder(tr("Log")));
