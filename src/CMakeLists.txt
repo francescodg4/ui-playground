@@ -5,6 +5,7 @@ qt_add_executable(pda
   Theme.cpp Theme.hpp
   pages/BlueprintsPage.cpp pages/BlueprintsPage.hpp
   pages/InventoryPage.cpp pages/InventoryPage.hpp
+  pages/PingPage.cpp pages/PingPage.hpp
   widgets/Holo.cpp widgets/Holo.hpp
   widgets/TabBar.cpp widgets/TabBar.hpp
 )
