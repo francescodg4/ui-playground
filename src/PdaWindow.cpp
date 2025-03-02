@@ -2,11 +2,11 @@
 
 #include "Theme.hpp"
 #include "pages/BlueprintsPage.hpp"
+#include "pages/EncyclopediaPage.hpp"
 #include "pages/InventoryPage.hpp"
 #include "pages/LogPage.hpp"
 #include "pages/PhotoPage.hpp"
 #include "pages/PingPage.hpp"
-#include "widgets/Holo.hpp"
 #include "widgets/TabBar.hpp"
 
 #include <QPainter>
@@ -22,13 +22,6 @@ constexpr qreal Bezel = 12; // blue plastic rim around the screen
 constexpr qreal Margin = 22; // window edge to screen edge
 constexpr qreal Radius = 38;
 constexpr qreal DotSpacing = 30;
-
-QWidget* placeholder(const QString& title)
-{
-    auto* page = new QWidget;
-    Holo::pageLayout(page, title)->addStretch();
-    return page;
-}
 }
 
 PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
@@ -51,7 +44,7 @@ PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
     addPage(Icon::Pin, tr("Ping Manager"), new PingPage);
     addPage(Icon::Image, tr("Photo Manager"), new PhotoPage(photos));
     addPage(Icon::Doc, tr("Log"), new LogPage);
-    addPage(Icon::Book, tr("Encyclopedia"), placeholder(tr("Encyclopedia")));
+    addPage(Icon::Book, tr("Encyclopedia"), new EncyclopediaPage);
     m_tabs->setBadge(1, 1);
     m_tabs->setBadge(4, LogPage::unreadCount());
 

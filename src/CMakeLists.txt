@@ -5,6 +5,7 @@ qt_add_executable(pda
   PhotoLibrary.cpp PhotoLibrary.hpp
   Theme.cpp Theme.hpp
   pages/BlueprintsPage.cpp pages/BlueprintsPage.hpp
+  pages/EncyclopediaPage.cpp pages/EncyclopediaPage.hpp
   pages/InventoryPage.cpp pages/InventoryPage.hpp
   pages/LogPage.cpp pages/LogPage.hpp
   pages/PhotoPage.cpp pages/PhotoPage.hpp
