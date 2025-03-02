@@ -12,6 +12,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QRandomGenerator>
+#include <QShortcut>
 #include <QStackedWidget>
 #include <QVBoxLayout>
 
@@ -49,6 +50,21 @@ PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
     m_tabs->setBadge(4, LogPage::unreadCount());
 
     connect(m_tabs, &TabBar::currentChanged, m_stack, &QStackedWidget::setCurrentIndex);
+
+    // keyboard: 1..6 jump to a page, Q / E step through them
+    for (int i = 0; i < m_tabs->count(); ++i) {
+        auto* shortcut = new QShortcut(QKeySequence(Qt::Key_1 + i), this);
+        connect(shortcut, &QShortcut::activated, this, [this, i] { setPage(i); });
+    }
+    connect(new QShortcut(QKeySequence(Qt::Key_Q), this), &QShortcut::activated, this, [this] {
+        setPage((currentPage() + pageCount() - 1) % pageCount());
+    });
+    connect(new QShortcut(QKeySequence(Qt::Key_E), this), &QShortcut::activated, this, [this] {
+        setPage((currentPage() + 1) % pageCount());
+    });
+    connect(new QShortcut(QKeySequence(Qt::Key_F11), this), &QShortcut::activated, this, [this] {
+        setWindowState(windowState() ^ Qt::WindowFullScreen);
+    });
 
     // drifting specks in the water
     auto* rng = QRandomGenerator::global();
