@@ -16,6 +16,7 @@ qt_add_executable(pda
 
 target_include_directories(pda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(pda PRIVATE
+  PDA_VERSION="${PROJECT_VERSION}"
   PDA_DEFAULT_PHOTO_DIR="${PROJECT_SOURCE_DIR}/photos"
 )
 target_link_libraries(pda PRIVATE Qt6::Widgets)
