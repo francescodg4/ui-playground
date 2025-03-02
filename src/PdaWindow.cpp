@@ -3,6 +3,7 @@
 #include "Theme.hpp"
 #include "pages/BlueprintsPage.hpp"
 #include "pages/InventoryPage.hpp"
+#include "pages/LogPage.hpp"
 #include "pages/PhotoPage.hpp"
 #include "pages/PingPage.hpp"
 #include "widgets/Holo.hpp"
@@ -49,10 +50,10 @@ PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
     addPage(Icon::Wrench, tr("Blueprints"), new BlueprintsPage);
     addPage(Icon::Pin, tr("Ping Manager"), new PingPage);
     addPage(Icon::Image, tr("Photo Manager"), new PhotoPage(photos));
-    addPage(Icon::Doc, tr("Log"), placeholder(tr("Log")));
+    addPage(Icon::Doc, tr("Log"), new LogPage);
     addPage(Icon::Book, tr("Encyclopedia"), placeholder(tr("Encyclopedia")));
     m_tabs->setBadge(1, 1);
-    m_tabs->setBadge(4, 4);
+    m_tabs->setBadge(4, LogPage::unreadCount());
 
     connect(m_tabs, &TabBar::currentChanged, m_stack, &QStackedWidget::setCurrentIndex);
 
