@@ -89,6 +89,8 @@ int PdaWindow::currentPage() const { return m_stack->currentIndex(); }
 
 void PdaWindow::setPage(int index) { m_tabs->setCurrentIndex(index); }
 
+int PdaWindow::pageIndex(QWidget* page) const { return m_stack->indexOf(page); }
+
 QRectF PdaWindow::screenRect() const
 {
     return QRectF(rect()).adjusted(Margin, Margin, -Margin, -Margin);

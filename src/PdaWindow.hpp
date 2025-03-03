@@ -19,6 +19,7 @@ public:
     int pageCount() const;
     int currentPage() const;
     void setPage(int index);
+    int pageIndex(QWidget* page) const;
 
 protected:
     void paintEvent(QPaintEvent* event) override;

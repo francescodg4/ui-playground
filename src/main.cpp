@@ -1,4 +1,5 @@
 #include "PdaWindow.hpp"
+#include "pages/PhotoPage.hpp"
 #include "PhotoLibrary.hpp"
 #include "Theme.hpp"
 
@@ -44,6 +45,12 @@ int main(int argc, char* argv[])
                 window.setPage(i);
                 QApplication::processEvents();
                 window.grab().save(dir.filePath(QStringLiteral("page-%1.png").arg(i + 1)));
+            }
+            if (auto* photoPage = window.findChild<PhotoPage*>(); photoPage && !photos.photos().isEmpty()) {
+                window.setPage(window.pageIndex(photoPage));
+                photoPage->openPhoto(0);
+                QApplication::processEvents();
+                window.grab().save(dir.filePath(QStringLiteral("photo-viewer.png")));
             }
             QApplication::quit();
         });
