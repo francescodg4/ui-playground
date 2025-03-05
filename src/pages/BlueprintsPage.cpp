@@ -99,6 +99,7 @@ protected:
         Icons::paint(p, m_bp.icon, disc.adjusted(11, 11, -11, -11), m_bp.accent);
 
         if (m_bp.isNew) {
+            p.save();
             const QPointF c = disc.topRight() + QPointF(-6, 6);
             p.setPen(Qt::NoPen);
             p.setBrush(Theme::badge);
@@ -109,6 +110,7 @@ protected:
             p.setFont(f);
             p.setPen(QColor(0x3b, 0x24, 0x00));
             p.drawText(QRectF(c.x() - 8, c.y() - 8, 16, 16), Qt::AlignCenter, QStringLiteral("!"));
+            p.restore();
         }
 
         p.setPen(Theme::text);
