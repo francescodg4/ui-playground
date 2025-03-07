@@ -3,7 +3,7 @@
 #include <QTimer>
 #include <QWidget>
 
-class QToolButton;
+class ClayButton;
 
 /// Messages received by the PDA, grouped by day, each with a play button.
 class LogPage : public QWidget {
@@ -14,9 +14,9 @@ public:
     static int unreadCount();
 
 private:
-    void togglePlayback(QToolButton* button, const QString& text);
-    void setPlaying(QToolButton* button, bool playing);
+    void togglePlayback(ClayButton* button, const QString& text);
+    void setPlaying(ClayButton* button, bool playing);
 
-    QToolButton* m_playing = nullptr;
+    ClayButton* m_playing = nullptr;
     QTimer m_playback;
 };

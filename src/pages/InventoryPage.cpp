@@ -2,6 +2,7 @@
 
 #include "Icons.hpp"
 #include "Theme.hpp"
+#include "widgets/Glass.hpp"
 #include "widgets/Holo.hpp"
 
 #include <QHBoxLayout>
@@ -11,6 +12,7 @@
 #include <QPainterPath>
 
 #include <functional>
+#include <utility>
 
 namespace {
 
@@ -65,46 +67,31 @@ protected:
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
 
-        p.setPen(QPen(QColor(185, 230, 255, 40), 1));
+        // low-contrast bento cells
+        p.setPen(QPen(Theme::glassBorder, 1));
         for (int r = 0; r < Rows; ++r) {
             for (int c = 0; c < Cols; ++c) {
-                p.drawRect(QRectF(Pad + c * Cell, Pad + r * Cell, Cell, Cell));
+                p.drawRoundedRect(QRectF(Pad + c * Cell, Pad + r * Cell, Cell, Cell).adjusted(2, 2, -2, -2), 8, 8);
             }
-        }
-
-        // corner brackets
-        const QRectF frame = QRectF(rect()).adjusted(1, 1, -1, -1);
-        const qreal L = 12;
-        p.setPen(QPen(QColor(215, 240, 255, 180), 2));
-        for (const QPointF corner : { frame.topLeft(), frame.topRight(), frame.bottomLeft(), frame.bottomRight() }) {
-            const qreal sx = corner.x() < width() / 2 ? 1 : -1;
-            const qreal sy = corner.y() < height() / 2 ? 1 : -1;
-            p.drawLine(corner, corner + QPointF(sx * L, 0));
-            p.drawLine(corner, corner + QPointF(0, sy * L));
         }
 
         for (int i = 0; i < int(std::size(Inventory)); ++i) {
             const Item& it = Inventory[i];
-            const QRectF r = itemRect(it);
-            const bool lit = i == m_hover || i == m_selected;
-            QPainterPath shape;
+            QRectF r = itemRect(it);
             if (it.small) {
                 const qreal d = std::min(r.width(), r.height()) - 8;
-                shape.addEllipse(r.center(), d / 2, d / 2);
-                p.fillPath(shape, QColor(160, 205, 235, 90));
-            } else {
-                shape.addRoundedRect(r, 10, 10);
-                QRadialGradient g(r.center() - QPointF(0, r.height() * 0.1), std::max(r.width(), r.height()) * 0.7);
-                g.setColorAt(0, QColor(150, 215, 255, 120));
-                g.setColorAt(1, QColor(40, 120, 200, 90));
-                p.fillPath(shape, g);
+                r = QRectF(r.center().x() - d / 2, r.center().y() - d / 2, d, d);
             }
-            if (lit) {
-                p.strokePath(shape, QPen(QColor(140, 220, 255, 120), 6));
+            const qreal radius = it.small ? r.height() / 2 : Theme::radiusControl;
+            if (i == m_selected) {
+                Glass::paintGlow(p, r, radius, Theme::glowAccent);
+            } else if (i == m_hover) {
+                Glass::paintGlow(p, r, radius, Theme::glowSoft, 0.7);
             }
-            p.strokePath(shape, QPen(QColor(215, 240, 255, it.small ? 90 : 180), 1.5));
-            const qreal inset = it.small ? r.width() * 0.26 : std::min(r.width(), r.height()) * 0.12;
-            Icons::paint(p, it.icon, r.adjusted(inset, inset, -inset, -inset));
+            Glass::paintClay(p, r, radius, i == m_selected ? Theme::accent : Theme::clay, i == m_pressed);
+            const QRectF face = i == m_pressed ? Glass::scaled(r, Theme::pressedScale) : r;
+            const qreal inset = it.small ? face.width() * 0.2 : std::min(face.width(), face.height()) * 0.12;
+            Icons::paint(p, it.icon, face.adjusted(inset, inset, -inset, -inset));
         }
     }
 
@@ -126,15 +113,25 @@ protected:
 
     void mousePressEvent(QMouseEvent* e) override
     {
-        m_selected = itemAt(e->position());
-        if (onSelect) {
-            onSelect(m_selected >= 0 ? QString::fromLatin1(Inventory[m_selected].name) : QString());
+        m_pressed = itemAt(e->position());
+        update();
+    }
+
+    void mouseReleaseEvent(QMouseEvent* e) override
+    {
+        const int pressed = std::exchange(m_pressed, -1);
+        if (pressed == itemAt(e->position())) {
+            m_selected = pressed;
+            if (onSelect) {
+                onSelect(m_selected >= 0 ? QString::fromLatin1(Inventory[m_selected].name) : QString());
+            }
         }
         update();
     }
 
 private:
     int m_hover = -1;
+    int m_pressed = -1;
     int m_selected = -1;
 };
 
@@ -175,36 +172,50 @@ protected:
     {
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
-        for (const Slot& s : Slots) {
+        for (int i = 0; i < int(std::size(Slots)); ++i) {
+            const Slot& s = Slots[i];
             const qreal r = radius(s);
-            const QPointF c = centre(s);
-            if (s.filled) {
-                QRadialGradient g(c - QPointF(0, r * 0.2), r * 1.1);
-                g.setColorAt(0, QColor(160, 220, 255, 140));
-                g.setColorAt(1, QColor(40, 120, 200, 115));
-                p.setBrush(g);
-                p.setPen(QPen(QColor(225, 245, 255, 215), 1.5));
-            } else {
-                p.setBrush(QColor(150, 200, 235, 46));
-                p.setPen(QPen(QColor(215, 240, 255, 115), 1.5));
+            const QRectF body(centre(s) - QPointF(r, r), QSizeF(2 * r, 2 * r));
+            const bool pressed = i == m_pressed;
+            if (s.body) {
+                Glass::paintGlow(p, body, r, Theme::glowAccent, 0.8);
             }
-            p.drawEllipse(c, r, r);
-            const qreal s2 = r * (s.body ? 0.8 : 0.62);
-            Icons::paint(p, s.icon, QRectF(c.x() - s2, c.y() - s2, 2 * s2, 2 * s2), s.filled ? Qt::white : QColor(225, 240, 255, 115));
+            // filled slots are raised clay; empty ones sit recessed and flat
+            Glass::paintClay(p, body, r, s.filled ? Theme::clay : Theme::clayRecessed, pressed || !s.filled);
+            const QRectF face = pressed ? Glass::scaled(body, Theme::pressedScale) : body;
+            const qreal s2 = face.width() / 2 * (s.body ? 0.8 : 0.62);
+            Icons::paint(p, s.icon, QRectF(face.center() - QPointF(s2, s2), QSizeF(2 * s2, 2 * s2)), s.filled ? Qt::white : Theme::iconMuted);
         }
+    }
+
+    int slotAt(const QPointF& pos) const
+    {
+        for (int i = 0; i < int(std::size(Slots)); ++i) {
+            if (QLineF(centre(Slots[i]), pos).length() <= radius(Slots[i])) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     void mousePressEvent(QMouseEvent* e) override
     {
-        for (const Slot& s : Slots) {
-            if (QLineF(centre(s), e->position()).length() <= radius(s)) {
-                if (onSelect) {
-                    onSelect(QString::fromLatin1(s.name) + (s.filled ? QString() : tr(" (empty)")));
-                }
-                return;
-            }
-        }
+        m_pressed = slotAt(e->position());
+        update();
     }
+
+    void mouseReleaseEvent(QMouseEvent* e) override
+    {
+        const int pressed = std::exchange(m_pressed, -1);
+        if (pressed >= 0 && pressed == slotAt(e->position()) && onSelect) {
+            const Slot& s = Slots[pressed];
+            onSelect(QString::fromLatin1(s.name) + (s.filled ? QString() : tr(" (empty)")));
+        }
+        update();
+    }
+
+private:
+    int m_pressed = -1;
 };
 
 } // namespace
@@ -220,18 +231,22 @@ InventoryPage::InventoryPage(QWidget* parent)
     grid->onSelect = [hint](const QString& name) { hint->setText(name.isEmpty() ? QStringLiteral(" ") : name); };
     equipment->onSelect = grid->onSelect;
 
+    auto* gridCell = new QVBoxLayout;
+    gridCell->addWidget(grid, 0, Qt::AlignCenter);
     auto* left = new QVBoxLayout;
+    left->setSpacing(Theme::gap - 4);
     left->addWidget(new SectionTitle(tr("Inventory")), 0, Qt::AlignHCenter);
-    left->addSpacing(8);
-    left->addWidget(grid, 0, Qt::AlignHCenter);
-    left->addStretch();
+    left->addWidget(Holo::card(gridCell), 1);
 
+    auto* equipmentCell = new QVBoxLayout;
+    equipmentCell->addWidget(equipment);
     auto* right = new QVBoxLayout;
+    right->setSpacing(Theme::gap - 4);
     right->addWidget(new SectionTitle(tr("Equipped")), 0, Qt::AlignHCenter);
-    right->addWidget(equipment, 1);
+    right->addWidget(Holo::card(equipmentCell), 1);
 
     auto* columns = new QHBoxLayout;
-    columns->setSpacing(30);
+    columns->setSpacing(Theme::gap);
     columns->addLayout(left, 1);
     columns->addLayout(right, 1);
 

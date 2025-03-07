@@ -3,10 +3,13 @@
 #include "Icons.hpp"
 #include "PhotoLibrary.hpp"
 #include "Theme.hpp"
+#include "widgets/ClayButton.hpp"
+#include "widgets/Glass.hpp"
 #include "widgets/Holo.hpp"
 
 #include <QDir>
 #include <QFileDialog>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
@@ -14,10 +17,9 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
-#include <QPushButton>
 #include <QShortcut>
 #include <QStackedWidget>
-#include <QToolButton>
+#include <QStyledItemDelegate>
 
 #include <functional>
 
@@ -25,47 +27,122 @@ namespace {
 const QSize ThumbSize(160, 90);
 const QSize FilmSize(72, 40);
 
-/// Scales @p image to fill @p size and crops the overflow (like CSS object-fit: cover).
+/// Scales @p image to fill @p size, crops the overflow (like CSS object-fit: cover) and rounds the corners.
 QPixmap cover(const QImage& image, const QSize& size)
 {
+    QPixmap result(size);
+    result.fill(Qt::transparent);
+    QPainter p(&result);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setRenderHint(QPainter::SmoothPixmapTransform);
+    QPainterPath clip;
+    clip.addRoundedRect(QRectF(QPointF(), QSizeF(size)), 10, 10);
     if (image.isNull()) {
-        QPixmap empty(size);
-        empty.fill(QColor(0, 30, 60, 120));
-        return empty;
+        p.fillPath(clip, Theme::solidSurface);
+        return result;
     }
     const QImage scaled = image.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-    const QRect crop(QPoint((scaled.width() - size.width()) / 2, (scaled.height() - size.height()) / 2), size);
-    return QPixmap::fromImage(scaled.copy(crop));
+    p.setClipPath(clip);
+    p.drawImage(QPointF((size.width() - scaled.width()) / 2.0, (size.height() - scaled.height()) / 2.0), scaled);
+    return result;
 }
 
-/// Dark rounded panel behind the viewer.
+/// Draws item thumbnails as rounded tiles: hover and selection radiate a glow, a press
+/// compresses the tile.
+class ThumbDelegate : public QStyledItemDelegate {
+public:
+    ThumbDelegate(const QSize& thumb, int pad, qreal radius, qreal glow, QObject* parent)
+        : QStyledItemDelegate(parent)
+        , m_thumb(thumb)
+        , m_pad(pad)
+        , m_radius(radius)
+        , m_glow(glow)
+    {
+    }
+
+    QSize sizeHint(const QStyleOptionViewItem&, const QModelIndex&) const override
+    {
+        return m_thumb + QSize(2 * m_pad, 2 * m_pad);
+    }
+
+    void paint(QPainter* p, const QStyleOptionViewItem& option, const QModelIndex& index) const override
+    {
+        const QRectF r = QRectF(option.rect).adjusted(m_pad, m_pad, -m_pad, -m_pad);
+        const bool hover = option.state & QStyle::State_MouseOver;
+        const bool selected = option.state & QStyle::State_Selected;
+        const bool pressed = hover && (QGuiApplication::mouseButtons() & Qt::LeftButton);
+
+        p->save();
+        p->setRenderHint(QPainter::Antialiasing);
+        p->setRenderHint(QPainter::SmoothPixmapTransform);
+        if (selected) {
+            Glass::paintGlow(*p, r, m_radius, Theme::glowAccent, m_glow);
+        } else if (hover) {
+            Glass::paintGlow(*p, r, m_radius, Theme::glowSoft, 0.8 * m_glow);
+        }
+        const QRectF face = pressed ? Glass::scaled(r, Theme::pressedScale) : r;
+        QPainterPath shape;
+        shape.addRoundedRect(face, m_radius, m_radius);
+        p->setClipPath(shape);
+        p->drawPixmap(face, index.data(Qt::DecorationRole).value<QIcon>().pixmap(m_thumb), QRectF(0, 0, m_thumb.width(), m_thumb.height()));
+        p->setClipping(false);
+        QLinearGradient light(face.topLeft(), face.bottomRight());
+        light.setColorAt(0, Theme::glassHighlight);
+        light.setColorAt(0.45, Theme::glassBorder);
+        p->strokePath(shape, QPen(QBrush(light), 1));
+        p->restore();
+    }
+
+private:
+    QSize m_thumb;
+    int m_pad;
+    qreal m_radius;
+    qreal m_glow; ///< glow strength: small tiles have little room around them
+};
+
+ClayButton* navButton(Icon icon, const QString& toolTip)
+{
+    auto* button = new ClayButton(icon);
+    button->setBodySize(QSize(40, 72));
+    button->setToolTip(toolTip);
+    return button;
+}
+
+} // namespace
+
+/// Liquid-glass overlay: blurs the gallery it covers (and the canvas) at the highest elevation.
 class ViewerPanel : public QWidget {
+public:
+    /// Snapshot of what lies underneath, in host coordinates.
+    void setUnderlay(const QImage& blurred, const QRect& hostRect)
+    {
+        m_underlay = blurred;
+        m_underlayRect = hostRect;
+    }
+
 protected:
     void paintEvent(QPaintEvent*) override
     {
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
-        QPainterPath shape;
-        shape.addRoundedRect(QRectF(rect()).adjusted(1, 1, -1, -1), 14, 14);
-        p.fillPath(shape, QColor(6, 40, 75, 225));
-        p.strokePath(shape, QPen(Theme::line, 1.5));
+        p.setRenderHint(QPainter::SmoothPixmapTransform);
+        const QRectF r = QRectF(rect());
+        Glass::paintBackdrop(p, this, r, Theme::radiusCard, Glass::Level::Modal);
+        if (QWidget* host = Glass::Backdrop::instance().host(); host && !m_underlay.isNull() && !Glass::settings().reducedTransparency) {
+            QPainterPath shape;
+            shape.addRoundedRect(r, Theme::radiusCard, Theme::radiusCard);
+            p.save();
+            p.setClipPath(shape);
+            p.drawImage(QRectF(m_underlayRect.translated(-mapTo(host, QPoint(0, 0)))), m_underlay);
+            p.restore();
+        }
+        Glass::paintTint(p, this, r, Theme::radiusCard, Glass::Level::Modal);
     }
+
+private:
+    QImage m_underlay;
+    QRect m_underlayRect;
 };
-
-QToolButton* navButton(Icon icon, const QString& toolTip)
-{
-    auto* button = new QToolButton;
-    button->setObjectName(QStringLiteral("nav"));
-    button->setIcon(Icons::icon(icon));
-    button->setIconSize(QSize(22, 22));
-    button->setFixedSize(42, 76);
-    button->setToolTip(toolTip);
-    button->setCursor(Qt::PointingHandCursor);
-    button->setFocusPolicy(Qt::NoFocus);
-    return button;
-}
-
-} // namespace
 
 /// Shows one photo scaled to fit, with a soft glow; horizontal swipes step through photos.
 class PhotoView : public QWidget {
@@ -87,15 +164,18 @@ protected:
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
         p.setRenderHint(QPainter::SmoothPixmapTransform);
-        const QSizeF size = QSizeF(m_pixmap.size()).scaled(QSizeF(this->size()) - QSizeF(16, 16), Qt::KeepAspectRatio);
+        const QSizeF size = QSizeF(m_pixmap.size()).scaled(QSizeF(this->size()) - QSizeF(24, 24), Qt::KeepAspectRatio);
         const QRectF target(QPointF((width() - size.width()) / 2, (height() - size.height()) / 2), size);
-        for (int i = 4; i >= 1; --i) {
-            p.setPen(QPen(QColor(100, 200, 255, 22), i * 3));
-            p.drawRect(target);
-        }
+        QPainterPath clip;
+        clip.addRoundedRect(target, Theme::radiusControl, Theme::radiusControl);
+        Glass::paintGlow(p, target, Theme::radiusControl, QColor(0, 0, 0, 90));
+        p.setClipPath(clip);
         p.drawPixmap(target, m_pixmap, QRectF(m_pixmap.rect()));
-        p.setPen(QPen(QColor(220, 245, 255, 150), 1));
-        p.drawRect(target);
+        p.setClipping(false);
+        QLinearGradient light(target.topLeft(), target.bottomRight());
+        light.setColorAt(0, Theme::glassHighlight);
+        light.setColorAt(0.45, Theme::glassBorder);
+        p.strokePath(clip, QPen(QBrush(light), 1));
     }
 
     void mousePressEvent(QMouseEvent* e) override { m_pressX = e->position().x(); }
@@ -129,23 +209,20 @@ PhotoPage::PhotoPage(PhotoLibrary* library, QWidget* parent)
 
 QWidget* PhotoPage::buildGallery()
 {
-    auto* gallery = new QWidget;
+    auto* gallery = new Glass::GlassCard;
+    m_gallery = gallery;
 
     m_count = new QLabel;
     m_count->setObjectName(QStringLiteral("dim"));
     m_count->setToolTip(QDir::toNativeSeparators(m_library->directory()));
-    auto* import = new QPushButton(Icons::icon(Icon::Plus), tr("Import"));
-    import->setObjectName(QStringLiteral("chip"));
-    import->setIconSize(QSize(14, 14));
-    import->setCursor(Qt::PointingHandCursor);
-    import->setFocusPolicy(Qt::NoFocus);
-    connect(import, &QPushButton::clicked, this, &PhotoPage::importPhotos);
+    auto* import = Holo::pillButton(Icon::Plus, tr("Import"));
+    connect(import, &ClayButton::clicked, this, &PhotoPage::importPhotos);
 
     m_grid = new QListWidget;
     m_grid->setObjectName(QStringLiteral("gallery"));
     m_grid->setViewMode(QListView::IconMode);
     m_grid->setIconSize(ThumbSize);
-    m_grid->setSpacing(10);
+    m_grid->setItemDelegate(new ThumbDelegate(ThumbSize, 12, Theme::radiusControl, 1.0, m_grid));
     m_grid->setMovement(QListView::Static);
     m_grid->setResizeMode(QListView::Adjust);
     m_grid->setUniformItemSizes(true);
@@ -164,10 +241,10 @@ QWidget* PhotoPage::buildGallery()
     bar->addWidget(m_count);
     bar->addStretch();
     bar->addWidget(import);
-    bar->addSpacing(16);
 
     auto* layout = new QVBoxLayout(gallery);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(Theme::gap, Theme::gap - 6, Theme::gap - 6, Theme::gap - 6);
+    layout->setSpacing(4);
     layout->addLayout(bar);
     layout->addWidget(m_grid, 1);
     layout->addWidget(m_empty, 1);
@@ -199,8 +276,9 @@ QWidget* PhotoPage::buildViewer()
     m_filmstrip->setFlow(QListView::LeftToRight);
     m_filmstrip->setMovement(QListView::Static);
     m_filmstrip->setIconSize(FilmSize);
-    m_filmstrip->setSpacing(4);
-    m_filmstrip->setFixedHeight(FilmSize.height() + 26);
+    m_filmstrip->setItemDelegate(new ThumbDelegate(FilmSize, 12, 8, 0.55, m_filmstrip));
+    m_filmstrip->setMouseTracking(true);
+    m_filmstrip->setFixedHeight(FilmSize.height() + 24 + 12);
     m_filmstrip->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_filmstrip->setFocusPolicy(Qt::NoFocus);
     m_filmstrip->viewport()->setAutoFillBackground(false);
@@ -224,10 +302,10 @@ QWidget* PhotoPage::buildViewer()
     layout->addLayout(stage, 1);
     layout->addWidget(m_filmstrip);
 
-    connect(m_prev, &QToolButton::clicked, this, [this] { openPhoto(m_current - 1); });
-    connect(m_next, &QToolButton::clicked, this, [this] { openPhoto(m_current + 1); });
-    connect(close, &QToolButton::clicked, this, &PhotoPage::closeViewer);
-    connect(remove, &QToolButton::clicked, this, &PhotoPage::deleteCurrent);
+    connect(m_prev, &ClayButton::clicked, this, [this] { openPhoto(m_current - 1); });
+    connect(m_next, &ClayButton::clicked, this, [this] { openPhoto(m_current + 1); });
+    connect(close, &ClayButton::clicked, this, &PhotoPage::closeViewer);
+    connect(remove, &ClayButton::clicked, this, &PhotoPage::deleteCurrent);
 
     const auto shortcut = [this](QKeySequence key, auto slot) {
         auto* s = new QShortcut(key, m_viewer);
@@ -266,10 +344,8 @@ void PhotoPage::rebuild()
         const QPixmap thumb = thumbnail(i);
         const QString tip = QStringLiteral("%1\n%2").arg(photos[i].name, photos[i].acquired.toString(QStringLiteral("yyyy-MM-dd HH:mm")));
         auto* item = new QListWidgetItem(QIcon(thumb), QString(), m_grid);
-        item->setSizeHint(ThumbSize + QSize(2, 2));
         item->setToolTip(tip);
         auto* film = new QListWidgetItem(QIcon(thumb), QString(), m_filmstrip);
-        film->setSizeHint(FilmSize + QSize(4, 4));
         film->setToolTip(photos[i].name);
     }
     m_filmstrip->blockSignals(false);
@@ -302,6 +378,14 @@ void PhotoPage::openPhoto(int index)
         const QSignalBlocker block(m_filmstrip);
         m_filmstrip->setCurrentRow(index);
         m_filmstrip->scrollToItem(m_filmstrip->item(index), QAbstractItemView::PositionAtCenter);
+    }
+    if (!isViewerOpen()) {
+        // the viewer floats over the gallery: keep a blurred copy of it as the glass underlay
+        if (QWidget* host = Glass::Backdrop::instance().host(); host && m_gallery->isVisible()) {
+            constexpr int Downscale = 4;
+            const QImage snapshot = m_gallery->grab().toImage().scaled(m_gallery->size() / Downscale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            m_viewer->setUnderlay(Glass::blur(snapshot, 24.0 / Downscale), QRect(m_gallery->mapTo(host, QPoint(0, 0)), m_gallery->size()));
+        }
     }
     m_views->setCurrentWidget(m_viewer);
     m_viewer->setFocus();

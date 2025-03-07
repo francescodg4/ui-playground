@@ -4,27 +4,53 @@
 #include <QFont>
 #include <QString>
 
-/// Colours and the application style sheet of the holographic PDA look.
+/// Design tokens and the application style sheet.
 namespace Theme {
 
-inline const QColor backdropTop { 0x1a, 0x7f, 0xd0 };
-inline const QColor backdropBottom { 0x06, 0x2a, 0x4d };
-inline const QColor bezelTop { 0x3a, 0xa0, 0xff };
-inline const QColor bezelBottom { 0x15, 0x5c, 0xcf };
-inline const QColor screenTop { 40, 125, 200 };
-inline const QColor screenBottom { 10, 62, 115 };
+// ambient canvas
+inline const QColor outside { 0x02, 0x0b, 0x16 }; ///< around the PDA screen
+inline const QColor canvas { 0x06, 0x18, 0x2c };
+inline const QColor ambient[] = {
+    // brand colours drifting under the glass
+    { 0x1f, 0x6f, 0xd6 },
+    { 0x12, 0xb5, 0xc9 },
+    { 0x5a, 0x3f, 0xd0 },
+    { 0x0e, 0x8f, 0x7a },
+};
 
-inline const QColor text { 0xee, 0xf8, 0xff };
-inline const QColor textDim { 0xa9, 0xcf, 0xe8 };
-inline const QColor line { 185, 230, 255, 140 };
-inline const QColor lineSoft { 185, 230, 255, 56 };
+// glass
+inline const QColor glassTint { 15, 15, 15 }; ///< dark tint, alpha adapts around 0.4
+inline const QColor glassBorder { 255, 255, 255, 20 }; ///< 1px rgba(255,255,255,0.08)
+inline const QColor glassHighlight { 255, 255, 255, 38 }; ///< 1px rgba(255,255,255,0.15), top/left
+inline const QColor solidSurface { 0x10, 0x22, 0x38 }; ///< reduced-transparency fallback
+
+// clay
+inline const QColor clay { 0x3d, 0x6f, 0x9e };
+inline const QColor clayRecessed { 0x22, 0x40, 0x60 }; ///< empty slots
+inline const QColor clayBadge { 0xf6, 0xa6, 0x23 };
+
+// radiance
+inline const QColor accent { 0x3b, 0x9b, 0xff };
+inline const QColor glowAccent { 0x3b, 0x9b, 0xff, 200 };
+inline const QColor glowSoft { 0x7f, 0xe6, 0xff, 130 }; ///< hover
+inline const QColor glowBadge { 0xf6, 0xa6, 0x23, 150 };
+
+// content
+inline const QColor text { 0xee, 0xf6, 0xff };
+inline const QColor textDim { 0xa8, 0xc4, 0xde };
+inline const QColor iconMuted { 255, 255, 255, 120 };
 inline const QColor cyan { 0x7f, 0xe6, 0xff };
 inline const QColor gold { 0xf3, 0xc7, 0x42 };
 inline const QColor green { 0x5e, 0xf0, 0xb4 };
-inline const QColor active { 0x1f, 0x86, 0xff };
-inline const QColor badge { 0xf6, 0xa6, 0x23 };
+inline const QColor glowGreen { 0x5e, 0xf0, 0xb4, 190 };
 
-/// Global Qt style sheet (scroll bars, buttons, labels, item views).
+// geometry
+inline constexpr qreal radiusCard = 20;
+inline constexpr qreal radiusControl = 16;
+inline constexpr int gap = 16;
+inline constexpr qreal pressedScale = 0.98;
+
+/// Global Qt style sheet (scroll bars, labels, item views, dialogs).
 QString styleSheet();
 
 /// Uppercase, letter-spaced font used by section titles.

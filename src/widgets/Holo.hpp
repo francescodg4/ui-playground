@@ -4,8 +4,9 @@
 
 #include <QWidget>
 
+class ClayButton;
+class QLayout;
 class QScrollArea;
-class QToolButton;
 class QVBoxLayout;
 
 /// Section heading: uppercase cyan text over a gold swoosh.
@@ -29,7 +30,13 @@ QVBoxLayout* pageLayout(QWidget* page, const QString& title);
 /// Frameless, transparent, vertically scrolling area around @p content.
 QScrollArea* scrollArea(QWidget* content);
 
-/// Rounded square icon button.
-QToolButton* roundButton(Icon icon, const QString& toolTip, QWidget* parent = nullptr);
+/// Bento card: frosted glass container around @p content (padding and gap from the theme).
+QWidget* card(QLayout* content);
+
+/// Round clay icon button.
+ClayButton* roundButton(Icon icon, const QString& toolTip, QWidget* parent = nullptr);
+
+/// Clay pill with an icon and a label.
+ClayButton* pillButton(Icon icon, const QString& text, QWidget* parent = nullptr);
 
 } // namespace Holo

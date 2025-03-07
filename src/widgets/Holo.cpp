@@ -1,11 +1,12 @@
 #include "Holo.hpp"
 
 #include "Theme.hpp"
+#include "widgets/ClayButton.hpp"
+#include "widgets/Glass.hpp"
 
 #include <QPainter>
 #include <QPainterPath>
 #include <QScrollArea>
-#include <QToolButton>
 #include <QVBoxLayout>
 
 SectionTitle::SectionTitle(const QString& text, QWidget* parent)
@@ -51,7 +52,7 @@ QVBoxLayout* pageLayout(QWidget* page, const QString& title)
 {
     auto* layout = new QVBoxLayout(page);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(10);
+    layout->setSpacing(Theme::gap - 4);
     layout->addWidget(new SectionTitle(title), 0, Qt::AlignHCenter);
     return layout;
 }
@@ -68,16 +69,26 @@ QScrollArea* scrollArea(QWidget* content)
     return area;
 }
 
-QToolButton* roundButton(Icon icon, const QString& toolTip, QWidget* parent)
+QWidget* card(QLayout* content)
 {
-    auto* button = new QToolButton(parent);
-    button->setObjectName(QStringLiteral("round"));
-    button->setIcon(Icons::icon(icon));
-    button->setIconSize(QSize(20, 20));
-    button->setFixedSize(36, 36);
+    auto* frame = new Glass::GlassCard;
+    content->setContentsMargins(Theme::gap, Theme::gap, Theme::gap, Theme::gap);
+    frame->setLayout(content);
+    return frame;
+}
+
+ClayButton* roundButton(Icon icon, const QString& toolTip, QWidget* parent)
+{
+    auto* button = new ClayButton(icon, parent);
     button->setToolTip(toolTip);
-    button->setCursor(Qt::PointingHandCursor);
-    button->setFocusPolicy(Qt::NoFocus);
+    return button;
+}
+
+ClayButton* pillButton(Icon icon, const QString& text, QWidget* parent)
+{
+    auto* button = new ClayButton(icon, parent);
+    button->setText(text);
+    button->setBodySize(QSize(30, 30));
     return button;
 }
 

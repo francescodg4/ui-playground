@@ -2,13 +2,13 @@
 
 #include "Icons.hpp"
 #include "Theme.hpp"
+#include "widgets/ClayButton.hpp"
 #include "widgets/Holo.hpp"
 
 #include <QGridLayout>
 #include <QLabel>
 #include <QScrollArea>
-#include <QStyle>
-#include <QToolButton>
+#include <QVBoxLayout>
 
 namespace {
 
@@ -61,18 +61,19 @@ LogPage::LogPage(QWidget* parent)
     : QWidget(parent)
 {
     auto* content = new QWidget;
-    auto* grid = new QGridLayout(content);
-    grid->setContentsMargins(4, 4, 30, 4);
-    grid->setHorizontalSpacing(22);
-    grid->setVerticalSpacing(24);
-    grid->setColumnMinimumWidth(0, 12);
-    grid->setColumnStretch(2, 1);
+    auto* list = new QVBoxLayout(content);
+    list->setContentsMargins(0, 0, 12, 0);
+    list->setSpacing(Theme::gap);
 
-    int row = 0;
     for (const Day& day : logDays()) {
+        auto* grid = new QGridLayout;
+        grid->setHorizontalSpacing(18);
+        grid->setVerticalSpacing(8);
+        grid->setColumnStretch(1, 1);
+        int row = 0;
         auto* title = new QLabel(QString::fromLatin1(day.title));
         title->setObjectName(QStringLiteral("day"));
-        grid->addWidget(title, row++, 0, 1, 4);
+        grid->addWidget(title, row++, 0, 1, 3);
 
         for (const Entry& entry : day.entries) {
             const QString text = QString::fromLatin1(entry.text);
@@ -80,26 +81,23 @@ LogPage::LogPage(QWidget* parent)
             doc->setPixmap(Icons::pixmap(Icon::LogDoc, QSize(22, 30), Theme::green));
             auto* label = new QLabel(text);
             label->setWordWrap(true);
-            grid->addWidget(doc, row, 1, Qt::AlignVCenter);
-            grid->addWidget(label, row, 2);
+            grid->addWidget(doc, row, 0, Qt::AlignVCenter);
+            grid->addWidget(label, row, 1);
             if (entry.audio) {
-                auto* play = new QToolButton;
-                play->setObjectName(QStringLiteral("logPlay"));
-                play->setIcon(Icons::icon(Icon::Play, Theme::green));
-                play->setIconSize(QSize(20, 20));
-                play->setFixedSize(36, 36);
+                auto* play = new ClayButton(Icon::Play);
+                play->setIconColor(Theme::green);
+                play->setGlowColor(Theme::glowGreen);
                 play->setToolTip(tr("Play"));
-                play->setCursor(Qt::PointingHandCursor);
-                play->setFocusPolicy(Qt::NoFocus);
-                connect(play, &QToolButton::clicked, this, [this, play, text] { togglePlayback(play, text); });
-                grid->addWidget(play, row, 3, Qt::AlignVCenter);
+                connect(play, &ClayButton::clicked, this, [this, play, text] { togglePlayback(play, text); });
+                grid->addWidget(play, row, 2, Qt::AlignVCenter);
             } else {
-                grid->addItem(new QSpacerItem(36, 36), row, 3);
+                grid->addItem(new QSpacerItem(48, 48), row, 2);
             }
             ++row;
         }
+        list->addWidget(Holo::card(grid));
     }
-    grid->setRowStretch(row, 1);
+    list->addStretch();
 
     m_playback.setSingleShot(true);
     connect(&m_playback, &QTimer::timeout, this, [this] { setPlaying(m_playing, false); });
@@ -108,7 +106,7 @@ LogPage::LogPage(QWidget* parent)
     layout->addWidget(Holo::scrollArea(content), 1);
 }
 
-void LogPage::togglePlayback(QToolButton* button, const QString& text)
+void LogPage::togglePlayback(ClayButton* button, const QString& text)
 {
     const bool wasPlaying = m_playing == button;
     setPlaying(m_playing, false);
@@ -119,16 +117,14 @@ void LogPage::togglePlayback(QToolButton* button, const QString& text)
     }
 }
 
-void LogPage::setPlaying(QToolButton* button, bool playing)
+void LogPage::setPlaying(ClayButton* button, bool playing)
 {
     if (!button) {
         return;
     }
-    button->setIcon(Icons::icon(playing ? Icon::Stop : Icon::Play, Theme::green));
+    button->setIconShape(playing ? Icon::Stop : Icon::Play);
     button->setToolTip(playing ? tr("Stop") : tr("Play"));
-    button->setProperty("playing", playing);
-    button->style()->unpolish(button);
-    button->style()->polish(button);
+    button->setActive(playing); // pulsing radiance while the entry plays
     if (playing) {
         m_playing = button;
     } else if (m_playing == button) {

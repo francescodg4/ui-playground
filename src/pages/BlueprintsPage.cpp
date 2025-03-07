@@ -2,6 +2,7 @@
 
 #include "Icons.hpp"
 #include "Theme.hpp"
+#include "widgets/Glass.hpp"
 #include "widgets/Holo.hpp"
 
 #include <QGridLayout>
@@ -72,7 +73,7 @@ public:
         : m_bp(bp)
     {
         setToolTip(QString::fromLatin1(bp.name));
-        setMinimumSize(96, 100);
+        setMinimumSize(96, 108);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         setAttribute(Qt::WA_Hover);
         setCursor(Qt::PointingHandCursor);
@@ -83,43 +84,48 @@ protected:
     {
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
-        const qreal d = 58;
-        const QRectF disc(width() / 2.0 - d / 2, 2, d, d);
-
+        const QRectF disc(width() / 2.0 - 29, 6, 58, 58);
         if (underMouse()) {
-            p.setPen(QPen(QColor(140, 220, 255, 110), 6));
-            p.drawEllipse(disc);
+            Glass::paintGlow(p, disc, 29, Theme::glowSoft, 0.8);
         }
-        QRadialGradient g(disc.center() - QPointF(0, d * 0.1), d * 0.6);
-        g.setColorAt(0, QColor(170, 225, 255, 130));
-        g.setColorAt(1, QColor(40, 115, 190, 90));
-        p.setBrush(g);
-        p.setPen(QPen(QColor(215, 240, 255, 165), 1.5));
-        p.drawEllipse(disc);
-        Icons::paint(p, m_bp.icon, disc.adjusted(11, 11, -11, -11), m_bp.accent);
+        Glass::paintClay(p, disc, 29, Theme::clay, m_pressed);
+        const QRectF face = m_pressed ? Glass::scaled(disc, Theme::pressedScale) : disc;
+        Icons::paint(p, m_bp.icon, face.adjusted(11, 11, -11, -11), m_bp.accent);
 
         if (m_bp.isNew) {
             p.save();
-            const QPointF c = disc.topRight() + QPointF(-6, 6);
-            p.setPen(Qt::NoPen);
-            p.setBrush(Theme::badge);
-            p.drawEllipse(c, 7.5, 7.5);
+            const QRectF b(disc.right() - 14, disc.top() - 4, 18, 18);
+            Glass::paintGlow(p, b, 9, Theme::glowBadge);
+            Glass::paintClay(p, b, 9, Theme::clayBadge);
             QFont f = font();
             f.setBold(true);
             f.setPixelSize(10);
             p.setFont(f);
             p.setPen(QColor(0x3b, 0x24, 0x00));
-            p.drawText(QRectF(c.x() - 8, c.y() - 8, 16, 16), Qt::AlignCenter, QStringLiteral("!"));
+            p.drawText(b, Qt::AlignCenter, QStringLiteral("!"));
             p.restore();
         }
 
         p.setPen(Theme::text);
-        p.drawText(QRectF(0, disc.bottom() + 5, width(), height() - disc.bottom() - 5),
+        p.drawText(QRectF(0, 6 + 58 + 8, width(), height() - 58 - 14),
             Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, QString::fromLatin1(m_bp.name));
+    }
+
+    void mousePressEvent(QMouseEvent*) override
+    {
+        m_pressed = true;
+        update();
+    }
+
+    void mouseReleaseEvent(QMouseEvent*) override
+    {
+        m_pressed = false;
+        update();
     }
 
 private:
     Blueprint m_bp;
+    bool m_pressed = false;
 };
 
 } // namespace
@@ -131,23 +137,23 @@ BlueprintsPage::BlueprintsPage(QWidget* parent)
     auto* content = new QWidget;
     auto* list = new QVBoxLayout(content);
     list->setContentsMargins(0, 0, 12, 0);
-    list->setSpacing(12);
+    list->setSpacing(Theme::gap);
 
     for (const Category& cat : categories()) {
         auto* header = new QLabel(QString::fromLatin1(cat.name));
-        header->setObjectName(QStringLiteral("category"));
-        list->addWidget(header);
+        header->setObjectName(QStringLiteral("cardTitle"));
 
         auto* grid = new QGridLayout;
         grid->setHorizontalSpacing(6);
         grid->setVerticalSpacing(10);
+        grid->addWidget(header, 0, 0, 1, Columns);
         for (int i = 0; i < cat.items.size(); ++i) {
-            grid->addWidget(new BlueprintTile(cat.items[i]), i / Columns, i % Columns);
+            grid->addWidget(new BlueprintTile(cat.items[i]), 1 + i / Columns, i % Columns);
         }
         for (int c = 0; c < Columns; ++c) {
             grid->setColumnStretch(c, 1);
         }
-        list->addLayout(grid);
+        list->addWidget(Holo::card(grid));
     }
     list->addStretch();
 

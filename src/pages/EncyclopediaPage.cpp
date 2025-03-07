@@ -2,8 +2,10 @@
 
 #include "Icons.hpp"
 #include "Theme.hpp"
+#include "widgets/Glass.hpp"
 #include "widgets/Holo.hpp"
 
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
@@ -97,7 +99,7 @@ public:
     {
     }
 
-    QSize sizeHint(const QStyleOptionViewItem&, const QModelIndex&) const override { return QSize(200, 27); }
+    QSize sizeHint(const QStyleOptionViewItem&, const QModelIndex&) const override { return QSize(200, 30); }
 
     void paint(QPainter* p, const QStyleOptionViewItem& option, const QModelIndex& index) const override
     {
@@ -106,16 +108,26 @@ public:
             ++depth;
         }
         const bool folder = index.model()->hasChildren(index);
-        const bool selected = index.data(OpenEntryRole).toBool();
+        const bool open = index.data(OpenEntryRole).toBool();
         const bool hover = option.state & QStyle::State_MouseOver;
+        const bool pressed = hover && (QGuiApplication::mouseButtons() & Qt::LeftButton);
 
         p->save();
         p->setRenderHint(QPainter::Antialiasing);
-        const QRectF bar = QRectF(option.rect).adjusted(0.5, 1.5, -0.5, -1.5);
-        p->fillRect(bar, selected ? QColor(60, 160, 255, 150) : hover ? QColor(170, 220, 250, 100)
-                                                                     : QColor(150, 205, 240, 64));
-        p->setPen(QPen(selected ? QColor(220, 245, 255, 200) : QColor(190, 230, 255, 64), 1));
-        p->drawRect(bar);
+        QRectF bar = QRectF(option.rect).adjusted(4, 2, -4, -2);
+        if (pressed) {
+            bar = Glass::scaled(bar, Theme::pressedScale);
+        }
+        const qreal radius = bar.height() / 2;
+        // no structural outlines: the open entry radiates, hover lifts the row slightly
+        if (open) {
+            Glass::paintGlow(*p, bar, radius, Theme::glowAccent, 0.7);
+            p->setBrush(QColor(0x3b, 0x9b, 0xff, 130));
+        } else {
+            p->setBrush(QColor(255, 255, 255, hover ? 26 : 10));
+        }
+        p->setPen(Qt::NoPen);
+        p->drawRoundedRect(bar, radius, radius);
 
         const qreal x = bar.left() + 8 + depth * 14;
         if (folder) {
@@ -172,14 +184,11 @@ protected:
         const QColor hud(0x9f, 0xe6, 0xff);
 
         QPainterPath card;
-        card.addRoundedRect(QRectF(0.75, 0.75, 398.5, 198.5), 8, 8);
-        QLinearGradient bg(0, 0, 400, 200);
-        bg.setColorAt(0, QColor(0x12, 0x34, 0x4f));
-        bg.setColorAt(1, QColor(0x08, 0x1a, 0x2b));
-        p.fillPath(card, bg);
+        card.addRoundedRect(QRectF(0.5, 0.5, 399, 199), 16, 16);
+        p.fillPath(card, QColor(0x0b, 0x26, 0x40));
         p.setClipPath(card);
 
-        p.setPen(QPen(QColor(45, 111, 154, 150), 0.5));
+        p.setPen(QPen(QColor(255, 255, 255, 16), 0.5));
         for (int y = 0; y <= 200; y += 25) {
             p.drawLine(0, y, 400, y);
         }
@@ -255,7 +264,10 @@ protected:
 
         p.setClipping(false);
         p.setBrush(Qt::NoBrush);
-        p.setPen(QPen(QColor(210, 240, 255, 180), 1.5));
+        QLinearGradient light(0, 0, 400, 200);
+        light.setColorAt(0, Theme::glassHighlight);
+        light.setColorAt(0.45, Theme::glassBorder);
+        p.setPen(QPen(QBrush(light), 1));
         p.drawPath(card);
     }
 
@@ -289,17 +301,22 @@ EncyclopediaPage::EncyclopediaPage(QWidget* parent)
 
     auto* entry = new QWidget;
     auto* entryLayout = new QVBoxLayout(entry);
-    entryLayout->setContentsMargins(0, 0, 14, 0);
+    entryLayout->setContentsMargins(0, 0, 10, 0);
     entryLayout->setSpacing(10);
     entryLayout->addWidget(m_scan);
     entryLayout->addWidget(m_title);
     entryLayout->addWidget(m_body);
     entryLayout->addStretch();
 
+    auto* treeCell = new QVBoxLayout;
+    treeCell->addWidget(m_tree);
+    auto* entryCell = new QVBoxLayout;
+    entryCell->addWidget(Holo::scrollArea(entry));
+
     auto* columns = new QHBoxLayout;
-    columns->setSpacing(18);
-    columns->addWidget(m_tree, 1);
-    columns->addWidget(Holo::scrollArea(entry), 2);
+    columns->setSpacing(Theme::gap);
+    columns->addWidget(Holo::card(treeCell), 1);
+    columns->addWidget(Holo::card(entryCell), 2);
 
     auto* layout = Holo::pageLayout(this, tr("Encyclopedia"));
     layout->addLayout(columns, 1);

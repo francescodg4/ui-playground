@@ -24,6 +24,8 @@ qt_add_executable(pda
   src/pages/LogPage.cpp src/pages/LogPage.hpp
   src/pages/PhotoPage.cpp src/pages/PhotoPage.hpp
   src/pages/PingPage.cpp src/pages/PingPage.hpp
+  src/widgets/ClayButton.cpp src/widgets/ClayButton.hpp
+  src/widgets/Glass.cpp src/widgets/Glass.hpp
   src/widgets/Holo.cpp src/widgets/Holo.hpp
   src/widgets/PageTransition.cpp src/widgets/PageTransition.hpp
   src/widgets/TabBar.cpp src/widgets/TabBar.hpp

@@ -1,6 +1,7 @@
 #include "TabBar.hpp"
 
 #include "Theme.hpp"
+#include "widgets/Glass.hpp"
 
 #include <QHelpEvent>
 #include <QMouseEvent>
@@ -8,12 +9,14 @@
 #include <QPainterPath>
 #include <QToolTip>
 
+#include <utility>
+
 namespace {
-constexpr qreal TabWidth = 68;
-constexpr qreal TabHeight = 30;
-constexpr qreal TabGap = 10;
-constexpr qreal TopMargin = 10; // room for the badges
-constexpr qreal Slant = -0.32; // horizontal shear of the tab plates
+constexpr qreal TabWidth = 60;
+constexpr qreal TabHeight = 34;
+constexpr qreal TabGap = 6;
+constexpr qreal BarPad = 6; // glass bar around the tabs
+constexpr qreal TopMargin = 14; // room for badges and glow
 }
 
 TabBar::TabBar(QWidget* parent)
@@ -63,14 +66,14 @@ void TabBar::setCurrentIndex(int index)
 QSize TabBar::sizeHint() const
 {
     const qreal width = m_tabs.size() * (TabWidth + TabGap) + 2 * TabHeight;
-    return QSize(int(width), int(TopMargin + TabHeight + 14));
+    return QSize(int(width), int(TopMargin + TabHeight + 2 * BarPad + 16));
 }
 
 QRectF TabBar::tabRect(int index) const
 {
     const qreal total = m_tabs.size() * TabWidth + (m_tabs.size() - 1) * TabGap;
     const qreal x0 = (width() - total) / 2;
-    return QRectF(x0 + index * (TabWidth + TabGap), TopMargin, TabWidth, TabHeight);
+    return QRectF(x0 + index * (TabWidth + TabGap), TopMargin + BarPad, TabWidth, TabHeight);
 }
 
 int TabBar::tabAt(const QPointF& pos) const
@@ -87,49 +90,46 @@ void TabBar::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
+    if (m_tabs.isEmpty()) {
+        return;
+    }
+
+    // floating liquid-glass bar
+    const QRectF bar = tabRect(0).united(tabRect(int(m_tabs.size()) - 1)).adjusted(-BarPad, -BarPad, BarPad, BarPad);
+    Glass::paintSurface(p, this, bar, bar.height() / 2, Glass::Level::Bar);
 
     for (int i = 0; i < m_tabs.size(); ++i) {
         const QRectF r = tabRect(i);
         const bool current = i == m_current;
-
-        QPainterPath plate;
-        plate.addRoundedRect(QRectF(-r.width() / 2, -r.height() / 2, r.width(), r.height()), 7, 7);
-        plate = QTransform().translate(r.center().x(), r.center().y()).shear(Slant, 0).map(plate);
+        const bool pressed = i == m_pressed;
+        const qreal radius = r.height() / 2;
 
         if (current) {
-            p.strokePath(plate, QPen(QColor(70, 170, 255, 110), 8));
-            QLinearGradient fill(r.topLeft(), r.bottomLeft());
-            fill.setColorAt(0, QColor(0x3a, 0x9b, 0xff));
-            fill.setColorAt(1, QColor(0x0f, 0x63, 0xd8));
-            p.fillPath(plate, fill);
-            p.strokePath(plate, QPen(QColor(0xcf, 0xe8, 0xff), 1.5));
-            // indicator dash under the selected tab
-            p.setPen(QPen(Qt::white, 2, Qt::SolidLine, Qt::RoundCap));
-            p.drawLine(QPointF(r.center().x() - 5, r.bottom() + 7), QPointF(r.center().x() + 5, r.bottom() + 7));
-        } else {
-            p.fillPath(plate, i == m_hover ? QColor(40, 120, 200, 120) : QColor(10, 55, 100, 90));
-            p.strokePath(plate, QPen(QColor(225, 242, 255, 205), 1.5));
+            Glass::paintGlow(p, r, radius, Theme::glowAccent);
+            Glass::paintClay(p, r, radius, Theme::accent, pressed);
+        } else if (pressed) {
+            Glass::paintClay(p, r, radius, Theme::clay, true);
+        } else if (i == m_hover) {
+            Glass::paintGlow(p, r, radius, Theme::glowSoft, 0.6);
+            QPainterPath pill;
+            pill.addRoundedRect(r, radius, radius);
+            p.fillPath(pill, QColor(255, 255, 255, 16));
         }
 
-        const qreal s = 19;
-        Icons::paint(p, m_tabs[i].icon, QRectF(r.center().x() - s / 2, r.center().y() - s / 2, s, s), QColor(0xe9, 0xf5, 0xff));
+        const qreal s = 18 * (pressed ? Theme::pressedScale : 1.0);
+        Icons::paint(p, m_tabs[i].icon, QRectF(r.center().x() - s / 2, r.center().y() - s / 2, s, s),
+            current ? Qt::white : Theme::text);
 
         if (const int count = m_tabs[i].badge; count > 0) {
-            const QPointF c(r.center().x() + 13, r.top());
-            QRadialGradient g(c - QPointF(2, 2), 9);
-            g.setColorAt(0, QColor(0xff, 0xd9, 0x8a));
-            g.setColorAt(1, Theme::badge);
-            p.setPen(Qt::NoPen);
-            p.setBrush(QColor(255, 180, 60, 80));
-            p.drawEllipse(c, 10, 10);
-            p.setBrush(g);
-            p.drawEllipse(c, 7.5, 7.5);
+            const QRectF b(r.right() - 16, r.top() - 9, 18, 18);
+            Glass::paintGlow(p, b, 9, Theme::glowBadge);
+            Glass::paintClay(p, b, 9, Theme::clayBadge);
             QFont f = font();
             f.setBold(true);
             f.setPixelSize(10);
             p.setFont(f);
             p.setPen(QColor(0x3b, 0x24, 0x00));
-            p.drawText(QRectF(c.x() - 8, c.y() - 8, 16, 16), Qt::AlignCenter, QString::number(count));
+            p.drawText(b, Qt::AlignCenter, QString::number(count));
         }
     }
 }
@@ -151,9 +151,17 @@ bool TabBar::event(QEvent* event)
 
 void TabBar::mousePressEvent(QMouseEvent* event)
 {
-    if (const int index = tabAt(event->position()); index >= 0) {
-        setCurrentIndex(index);
+    m_pressed = tabAt(event->position());
+    update();
+}
+
+void TabBar::mouseReleaseEvent(QMouseEvent* event)
+{
+    const int pressed = std::exchange(m_pressed, -1);
+    if (pressed >= 0 && pressed == tabAt(event->position())) {
+        setCurrentIndex(pressed);
     }
+    update();
 }
 
 void TabBar::mouseMoveEvent(QMouseEvent* event)

@@ -9,7 +9,8 @@ class PhotoView;
 class QLabel;
 class QListWidget;
 class QStackedWidget;
-class QToolButton;
+class ClayButton;
+class ViewerPanel;
 
 /// Gallery of the acquired images with a full-size viewer (previous / next / delete).
 class PhotoPage : public QWidget {
@@ -35,12 +36,13 @@ private:
     QLabel* m_count = nullptr;
     QLabel* m_empty = nullptr;
 
-    QWidget* m_viewer = nullptr;
+    ViewerPanel* m_viewer = nullptr;
+    QWidget* m_gallery = nullptr;
     PhotoView* m_view = nullptr;
     QLabel* m_name = nullptr;
     QLabel* m_meta = nullptr;
-    QToolButton* m_prev = nullptr;
-    QToolButton* m_next = nullptr;
+    ClayButton* m_prev = nullptr;
+    ClayButton* m_next = nullptr;
     QListWidget* m_filmstrip = nullptr;
     int m_current = -1;
 

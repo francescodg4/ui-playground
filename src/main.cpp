@@ -2,6 +2,7 @@
 #include "pages/PhotoPage.hpp"
 #include "PhotoLibrary.hpp"
 #include "Theme.hpp"
+#include "widgets/Glass.hpp"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -21,9 +22,10 @@ int main(int argc, char* argv[])
     const QCommandLineOption photosOption("photos", "Folder with the acquired images.", "dir", QStringLiteral(PDA_DEFAULT_PHOTO_DIR));
     const QCommandLineOption pageOption("page", "Page shown at start (1-6).", "n", "1");
     const QCommandLineOption fullScreenOption("fullscreen", "Run full screen (F11 toggles).");
-    const QCommandLineOption reducedMotionOption("reduced-motion", "Switch pages without animation.");
+    const QCommandLineOption reducedMotionOption("reduced-motion", "No animations: static canvas, no page transitions or pulsing.");
+    const QCommandLineOption reducedTransparencyOption("reduced-transparency", "Solid high-contrast surfaces instead of glass.");
     const QCommandLineOption screenshotOption("screenshot", "Save every page as page-N.png in <dir> and quit.", "dir");
-    parser.addOptions({ photosOption, pageOption, fullScreenOption, reducedMotionOption, screenshotOption });
+    parser.addOptions({ photosOption, pageOption, fullScreenOption, reducedMotionOption, reducedTransparencyOption, screenshotOption });
     parser.process(app);
 
     QApplication::setStyle(QStringLiteral("Fusion"));
@@ -31,6 +33,9 @@ int main(int argc, char* argv[])
     QFont font = QApplication::font();
     font.setPointSizeF(10);
     QApplication::setFont(font);
+
+    Glass::settings().reducedMotion = parser.isSet(reducedMotionOption);
+    Glass::settings().reducedTransparency = parser.isSet(reducedTransparencyOption);
 
     PhotoLibrary photos(parser.value(photosOption));
     PdaWindow window(&photos);
