@@ -169,7 +169,7 @@ namespace {
                     } };
         case Icon::Book:
             return { { 24, 24 }, [](Canvas& c) {
-                        c.fill(u"M2 5c3-1.5 6.5-1.5 9.3.6V20C8.5 18 5 18 2 19.5zM22 5c-3-1.5-6.5-1.5-9.3.6V20c2.8-2 6.3-2 9.3-.5z", c.c);
+                        c.fill(u"M2 5c3-1.5 5.5-1.5 8 .6V20C7.5 18 5 18 2 19.5zM22 5c-3-1.5-5.5-1.5-8 .6V20c2.5-2 5-2 8-.5z", c.c);
                     } };
 
         // ---- interface glyphs ----------------------------------------------------------------
@@ -382,6 +382,16 @@ namespace {
             return { { 48, 48 }, [](Canvas& c) {
                         c.stroke(u"M18 42l6-30 6 30z", c.c, 3);
                         c.fill(circle(24, 10, 4), c.c);
+                    } };
+
+        // ---- theme selection ----------------------------------------------------------------------
+        case Icon::Palette:
+            return { { 24, 24 }, [](Canvas& c) {
+                        QPainterPath palette = svgPath(u"M12 3C7 3 3 6.6 3 11c0 4.1 3.4 7.4 7.6 7.4h1.2c1 0 1.6.8 1.6 1.6 0 1 .7 1.9 1.9 1.9C18.8 21.9 21 17.2 21 12c0-5-4-9-9-9Z");
+                        for (const QPointF dot : { QPointF(7.5, 10.5), QPointF(10.2, 6.8), QPointF(14.6, 6.8), QPointF(17.4, 10.6) }) {
+                            palette = palette.subtracted(circle(dot.x(), dot.y(), 1.5));
+                        }
+                        c.fill(palette, c.c);
                     } };
         }
         return { { 1, 1 }, [](Canvas&) {} };

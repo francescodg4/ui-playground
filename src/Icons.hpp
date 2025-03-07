@@ -56,6 +56,8 @@ enum class Icon {
     Seamoth,
     Signal,
     Beacon,
+    // theme selection
+    Palette,
 };
 
 namespace Icons {

@@ -15,20 +15,25 @@ qt_standard_project_setup()
 qt_add_executable(pda
   src/main.cpp
   src/Icons.cpp src/Icons.hpp
-  src/PdaWindow.cpp src/PdaWindow.hpp
+  src/PdaShell.hpp
   src/PhotoLibrary.cpp src/PhotoLibrary.hpp
-  src/Theme.cpp src/Theme.hpp
-  src/pages/BlueprintsPage.cpp src/pages/BlueprintsPage.hpp
-  src/pages/EncyclopediaPage.cpp src/pages/EncyclopediaPage.hpp
-  src/pages/InventoryPage.cpp src/pages/InventoryPage.hpp
-  src/pages/LogPage.cpp src/pages/LogPage.hpp
-  src/pages/PhotoPage.cpp src/pages/PhotoPage.hpp
-  src/pages/PingPage.cpp src/pages/PingPage.hpp
-  src/widgets/ClayButton.cpp src/widgets/ClayButton.hpp
-  src/widgets/Glass.cpp src/widgets/Glass.hpp
-  src/widgets/Holo.cpp src/widgets/Holo.hpp
-  src/widgets/PageTransition.cpp src/widgets/PageTransition.hpp
-  src/widgets/TabBar.cpp src/widgets/TabBar.hpp
+  src/ThemeController.cpp src/ThemeController.hpp
+  src/ThemeDialog.cpp src/ThemeDialog.hpp
+  src/ThemeRegistry.cpp src/ThemeRegistry.hpp
+  src/themes/glass/Entry.cpp
+  src/themes/glass/PdaWindow.cpp src/themes/glass/PdaWindow.hpp
+  src/themes/glass/Theme.cpp src/themes/glass/Theme.hpp
+  src/themes/glass/pages/BlueprintsPage.cpp src/themes/glass/pages/BlueprintsPage.hpp
+  src/themes/glass/pages/EncyclopediaPage.cpp src/themes/glass/pages/EncyclopediaPage.hpp
+  src/themes/glass/pages/InventoryPage.cpp src/themes/glass/pages/InventoryPage.hpp
+  src/themes/glass/pages/LogPage.cpp src/themes/glass/pages/LogPage.hpp
+  src/themes/glass/pages/PhotoPage.cpp src/themes/glass/pages/PhotoPage.hpp
+  src/themes/glass/pages/PingPage.cpp src/themes/glass/pages/PingPage.hpp
+  src/themes/glass/widgets/ClayButton.cpp src/themes/glass/widgets/ClayButton.hpp
+  src/themes/glass/widgets/Glass.cpp src/themes/glass/widgets/Glass.hpp
+  src/themes/glass/widgets/Holo.cpp src/themes/glass/widgets/Holo.hpp
+  src/themes/glass/widgets/PageTransition.cpp src/themes/glass/widgets/PageTransition.hpp
+  src/themes/glass/widgets/TabBar.cpp src/themes/glass/widgets/TabBar.hpp
 )
 
 target_include_directories(pda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
