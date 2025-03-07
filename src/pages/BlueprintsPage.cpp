@@ -2,12 +2,13 @@
 
 #include "Icons.hpp"
 #include "Theme.hpp"
-#include "widgets/Holo.hpp"
+#include "widgets/Metal.hpp"
+#include "widgets/MetalWidgets.hpp"
+#include "widgets/Telemetry.hpp"
 
-#include <QGridLayout>
-#include <QLabel>
+#include <QListWidget>
 #include <QPainter>
-#include <QScrollArea>
+#include <QStyledItemDelegate>
 #include <QVBoxLayout>
 
 namespace {
@@ -65,61 +66,59 @@ const QList<Category>& categories()
     return list;
 }
 
-/// Round token with the item icon and its name underneath.
-class BlueprintTile : public QWidget {
+enum Role { HeaderRole = Qt::UserRole, IconRole, AccentRole, NumberRole, CategoryRole, NewRole };
+
+/// Playlist rows on the LCD: numbered entries, category headers, glowing monospace text.
+class PlaylistDelegate : public QStyledItemDelegate {
 public:
-    explicit BlueprintTile(const Blueprint& bp)
-        : m_bp(bp)
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    QSize sizeHint(const QStyleOptionViewItem&, const QModelIndex& index) const override
     {
-        setToolTip(QString::fromLatin1(bp.name));
-        setMinimumSize(96, 100);
-        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        setAttribute(Qt::WA_Hover);
-        setCursor(Qt::PointingHandCursor);
+        return QSize(200, index.data(HeaderRole).toBool() ? 26 : 22);
     }
 
-protected:
-    void paintEvent(QPaintEvent*) override
+    void paint(QPainter* p, const QStyleOptionViewItem& option, const QModelIndex& index) const override
     {
-        QPainter p(this);
-        p.setRenderHint(QPainter::Antialiasing);
-        const qreal d = 58;
-        const QRectF disc(width() / 2.0 - d / 2, 2, d, d);
-
-        if (underMouse()) {
-            p.setPen(QPen(QColor(140, 220, 255, 110), 6));
-            p.drawEllipse(disc);
+        p->save();
+        p->setRenderHint(QPainter::Antialiasing);
+        const QRectF r = QRectF(option.rect).adjusted(2, 1, -2, -1);
+        if (index.data(HeaderRole).toBool()) {
+            p->setFont(Metal::digitalFont(12, true));
+            Metal::glowText(*p, r.adjusted(4, 0, 0, -2), Qt::AlignLeft | Qt::AlignBottom, index.data().toString().toUpper(), Theme::lcdGlow);
+            p->fillRect(QRectF(r.left() + 4, r.bottom(), r.width() - 8, 1), Theme::lcdDim);
+            p->restore();
+            return;
         }
-        QRadialGradient g(disc.center() - QPointF(0, d * 0.1), d * 0.6);
-        g.setColorAt(0, QColor(170, 225, 255, 130));
-        g.setColorAt(1, QColor(40, 115, 190, 90));
-        p.setBrush(g);
-        p.setPen(QPen(QColor(215, 240, 255, 165), 1.5));
-        p.drawEllipse(disc);
-        Icons::paint(p, m_bp.icon, disc.adjusted(11, 11, -11, -11), m_bp.accent);
-
-        if (m_bp.isNew) {
-            p.save();
-            const QPointF c = disc.topRight() + QPointF(-6, 6);
-            p.setPen(Qt::NoPen);
-            p.setBrush(Theme::badge);
-            p.drawEllipse(c, 7.5, 7.5);
-            QFont f = font();
-            f.setBold(true);
-            f.setPixelSize(10);
-            p.setFont(f);
-            p.setPen(QColor(0x3b, 0x24, 0x00));
-            p.drawText(QRectF(c.x() - 8, c.y() - 8, 16, 16), Qt::AlignCenter, QStringLiteral("!"));
-            p.restore();
+        const bool selected = option.state & QStyle::State_Selected;
+        if (selected || (option.state & QStyle::State_MouseOver)) {
+            p->fillRect(r, selected ? Theme::accent : Theme::lcdRow);
         }
-
-        p.setPen(Theme::text);
-        p.drawText(QRectF(0, disc.bottom() + 5, width(), height() - disc.bottom() - 5),
-            Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, QString::fromLatin1(m_bp.name));
+        const QColor ink = selected ? Qt::white : Theme::lcdGlow;
+        p->setFont(Metal::digitalFont(12));
+        const QString number = QStringLiteral("%1.").arg(index.data(NumberRole).toInt(), 2, 10, QLatin1Char('0'));
+        p->setPen(ink);
+        p->drawText(r.adjusted(6, 0, 0, 0), Qt::AlignVCenter | Qt::AlignLeft, number);
+        const QRectF chip(r.left() + 36, r.center().y() - 9, 20, 18);
+        p->setPen(Qt::NoPen);
+        p->setBrush(QColor(0x3a, 0x62, 0xa0));
+        p->drawRoundedRect(chip, 4, 4);
+        Icons::paint(*p, Icon(index.data(IconRole).toInt()), chip.adjusted(2, 1, -2, -1), index.data(AccentRole).value<QColor>());
+        Metal::glowText(*p, r.adjusted(62, 0, -160, 0), Qt::AlignVCenter | Qt::AlignLeft, index.data().toString(), ink);
+        if (index.data(NewRole).toBool()) {
+            const QRectF badge(r.right() - 196, r.center().y() - 7, 34, 14);
+            p->setPen(Qt::NoPen);
+            p->setBrush(Theme::lcdGlow);
+            p->drawRoundedRect(badge, 3, 3);
+            p->setPen(Theme::lcdBg);
+            p->setFont(Metal::digitalFont(10, true));
+            p->drawText(badge, Qt::AlignCenter, QStringLiteral("NEW"));
+            p->setFont(Metal::digitalFont(12));
+        }
+        p->setPen(selected ? Qt::white : Theme::lcdDim.lighter(200));
+        p->drawText(r.adjusted(0, 0, -8, 0), Qt::AlignVCenter | Qt::AlignRight, index.data(CategoryRole).toString().toUpper());
+        p->restore();
     }
-
-private:
-    Blueprint m_bp;
 };
 
 } // namespace
@@ -127,30 +126,38 @@ private:
 BlueprintsPage::BlueprintsPage(QWidget* parent)
     : QWidget(parent)
 {
-    constexpr int Columns = 6;
-    auto* content = new QWidget;
-    auto* list = new QVBoxLayout(content);
-    list->setContentsMargins(0, 0, 12, 0);
-    list->setSpacing(12);
+    auto* list = new QListWidget;
+    list->setItemDelegate(new PlaylistDelegate(list));
+    list->setMouseTracking(true);
+    list->setFocusPolicy(Qt::NoFocus);
+    list->viewport()->setAutoFillBackground(false);
+    list->setCursor(Qt::PointingHandCursor);
 
+    int number = 0;
     for (const Category& cat : categories()) {
-        auto* header = new QLabel(QString::fromLatin1(cat.name));
-        header->setObjectName(QStringLiteral("category"));
-        list->addWidget(header);
-
-        auto* grid = new QGridLayout;
-        grid->setHorizontalSpacing(6);
-        grid->setVerticalSpacing(10);
-        for (int i = 0; i < cat.items.size(); ++i) {
-            grid->addWidget(new BlueprintTile(cat.items[i]), i / Columns, i % Columns);
+        auto* header = new QListWidgetItem(QString::fromLatin1(cat.name), list);
+        header->setData(HeaderRole, true);
+        header->setFlags(Qt::NoItemFlags);
+        for (const Blueprint& bp : cat.items) {
+            auto* item = new QListWidgetItem(QString::fromLatin1(bp.name), list);
+            item->setData(IconRole, int(bp.icon));
+            item->setData(AccentRole, bp.accent);
+            item->setData(NumberRole, ++number);
+            item->setData(CategoryRole, QString::fromLatin1(cat.name));
+            item->setData(NewRole, bp.isNew);
         }
-        for (int c = 0; c < Columns; ++c) {
-            grid->setColumnStretch(c, 1);
-        }
-        list->addLayout(grid);
     }
-    list->addStretch();
+    setStatusTip(tr("%1 blueprints - 1 new").arg(number));
+    connect(list, &QListWidget::itemClicked, this, [](QListWidgetItem* item) {
+        Telemetry::report(tr("Blueprint: %1 (%2)").arg(item->text(), item->data(CategoryRole).toString()));
+    });
 
-    auto* layout = Holo::pageLayout(this, tr("Blueprints"));
-    layout->addWidget(Holo::scrollArea(content), 1);
+    auto* panel = new LcdPanel;
+    auto* panelLayout = new QVBoxLayout(panel);
+    panelLayout->setContentsMargins(8, 6, 6, 8);
+    panelLayout->addWidget(list);
+
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(4, 4, 4, 4);
+    layout->addWidget(panel);
 }

@@ -2,16 +2,22 @@
 
 #include <QHash>
 #include <QPixmap>
+#include <QTimer>
 #include <QWidget>
 
+class CapsuleButton;
+class DockTabs;
 class PhotoLibrary;
 class PhotoView;
+class PositionSlider;
 class QLabel;
 class QListWidget;
 class QStackedWidget;
-class QToolButton;
+class RoundButton;
 
-/// Gallery of the acquired images with a full-size viewer (previous / next / delete).
+/// Gallery and viewer modules docked under bottom tabs. The viewer is driven like a player:
+/// position slider, transport deck (previous, slideshow play / pause / stop, next) and
+/// capsules for import (eject), gallery (PL) and delete.
 class PhotoPage : public QWidget {
     Q_OBJECT
 public:
@@ -27,21 +33,22 @@ private:
     void rebuild();
     void importPhotos();
     void deleteCurrent();
+    void setSlideshow(bool running);
     QPixmap thumbnail(int index);
 
     PhotoLibrary* m_library;
     QStackedWidget* m_views = nullptr;
+    DockTabs* m_tabs = nullptr;
     QListWidget* m_grid = nullptr;
     QLabel* m_count = nullptr;
-    QLabel* m_empty = nullptr;
 
     QWidget* m_viewer = nullptr;
     PhotoView* m_view = nullptr;
-    QLabel* m_name = nullptr;
-    QLabel* m_meta = nullptr;
-    QToolButton* m_prev = nullptr;
-    QToolButton* m_next = nullptr;
-    QListWidget* m_filmstrip = nullptr;
+    PositionSlider* m_position = nullptr;
+    RoundButton* m_play = nullptr;
+    RoundButton* m_prev = nullptr;
+    RoundButton* m_next = nullptr;
+    QTimer m_slideshow;
     int m_current = -1;
 
     QHash<QString, QPixmap> m_thumbnails; ///< keyed by path + modification time

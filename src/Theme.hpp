@@ -1,33 +1,32 @@
 #pragma once
 
 #include <QColor>
-#include <QFont>
 #include <QString>
 
-/// Colours and the application style sheet of the holographic PDA look.
+/// Tokens of the Winamp Modern look: brushed metal frame, cobalt LCD glass, glowing telemetry.
 namespace Theme {
 
-inline const QColor backdropTop { 0x1a, 0x7f, 0xd0 };
-inline const QColor backdropBottom { 0x06, 0x2a, 0x4d };
-inline const QColor bezelTop { 0x3a, 0xa0, 0xff };
-inline const QColor bezelBottom { 0x15, 0x5c, 0xcf };
-inline const QColor screenTop { 40, 125, 200 };
-inline const QColor screenBottom { 10, 62, 115 };
+// skill tokens
+inline const QColor frameTop { 0xd8, 0xde, 0xe8 }; ///< --winamp-frame-bg (0%)
+inline const QColor frameBottom { 0xa0, 0xaa, 0xb8 }; ///< --winamp-frame-bg (100%)
+inline const QColor bevelLight { 0xff, 0xff, 0xff }; ///< --winamp-metal-bevel: inset 1px 1px 0 #ffffff
+inline const QColor bevelDark { 0x40, 0x48, 0x58 }; ///< --winamp-metal-bevel: inset -1px -1px 0 #404858
+inline const QColor lcdBg { 0x09, 0x1a, 0x38 }; ///< --winamp-lcd-bg
+inline const QColor lcdGlow { 0x70, 0xb0, 0xff }; ///< --winamp-lcd-glow
+inline const QColor titleTop { 0x18, 0x48, 0x88 }; ///< --winamp-titlebar-bg (0%)
+inline const QColor titleBottom { 0x08, 0x18, 0x30 }; ///< --winamp-titlebar-bg (100%)
+inline constexpr qreal radiusButton = 12; ///< --border-radius-button
+inline constexpr qreal radiusPanel = 6; ///< --border-radius-panel
 
-inline const QColor text { 0xee, 0xf8, 0xff };
-inline const QColor textDim { 0xa9, 0xcf, 0xe8 };
-inline const QColor line { 185, 230, 255, 140 };
-inline const QColor lineSoft { 185, 230, 255, 56 };
-inline const QColor cyan { 0x7f, 0xe6, 0xff };
-inline const QColor gold { 0xf3, 0xc7, 0x42 };
-inline const QColor green { 0x5e, 0xf0, 0xb4 };
-inline const QColor active { 0x1f, 0x86, 0xff };
-inline const QColor badge { 0xf6, 0xa6, 0x23 };
+// supporting colours
+inline const QColor lcdDim { 0x1e, 0x3d, 0x6e }; ///< unlit segments, grid lines
+inline const QColor lcdRow { 0x14, 0x2e, 0x5c }; ///< highlighted playlist row
+inline const QColor accent { 0x2f, 0x6f, 0xd8 }; ///< blue active state (Play)
+inline const QColor text { 0x1c, 0x24, 0x33 }; ///< UI text on metal
+inline const QColor textDim { 0x5a, 0x64, 0x78 };
+inline const QColor outline { 0x6a, 0x74, 0x86 };
 
-/// Global Qt style sheet (scroll bars, buttons, labels, item views).
+/// Global Qt style sheet (scroll bars, labels, dialogs).
 QString styleSheet();
-
-/// Uppercase, letter-spaced font used by section titles.
-QFont titleFont();
 
 } // namespace Theme

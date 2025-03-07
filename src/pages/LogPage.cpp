@@ -1,14 +1,17 @@
 #include "LogPage.hpp"
 
-#include "Icons.hpp"
 #include "Theme.hpp"
-#include "widgets/Holo.hpp"
+#include "widgets/Metal.hpp"
+#include "widgets/MetalWidgets.hpp"
+#include "widgets/Telemetry.hpp"
 
-#include <QGridLayout>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QPainter>
 #include <QScrollArea>
-#include <QStyle>
-#include <QToolButton>
+#include <QVBoxLayout>
+
+#include <algorithm>
 
 namespace {
 
@@ -48,6 +51,28 @@ const QList<Day>& logDays()
 
 } // namespace
 
+/// Playlist row on the LCD; the playing one is highlighted.
+class LogRow : public QWidget {
+public:
+    void setPlaying(bool playing)
+    {
+        m_playing = playing;
+        update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override
+    {
+        if (m_playing) {
+            QPainter p(this);
+            p.fillRect(rect(), Theme::lcdRow);
+        }
+    }
+
+private:
+    bool m_playing = false;
+};
+
 int LogPage::unreadCount()
 {
     int count = 0;
@@ -60,79 +85,90 @@ int LogPage::unreadCount()
 LogPage::LogPage(QWidget* parent)
     : QWidget(parent)
 {
+    setStatusTip(tr("%1 unread messages").arg(unreadCount()));
+
     auto* content = new QWidget;
-    auto* grid = new QGridLayout(content);
-    grid->setContentsMargins(4, 4, 30, 4);
-    grid->setHorizontalSpacing(22);
-    grid->setVerticalSpacing(24);
-    grid->setColumnMinimumWidth(0, 12);
-    grid->setColumnStretch(2, 1);
+    auto* list = new QVBoxLayout(content);
+    list->setContentsMargins(0, 0, 8, 0);
+    list->setSpacing(2);
 
-    int row = 0;
+    int number = 0;
     for (const Day& day : logDays()) {
-        auto* title = new QLabel(QString::fromLatin1(day.title));
-        title->setObjectName(QStringLiteral("day"));
-        grid->addWidget(title, row++, 0, 1, 4);
-
+        auto* title = MetalUi::lcdLabel(QString::fromLatin1(day.title).toUpper());
+        title->setFont(Metal::digitalFont(13, true));
+        list->addWidget(title);
         for (const Entry& entry : day.entries) {
             const QString text = QString::fromLatin1(entry.text);
-            auto* doc = new QLabel;
-            doc->setPixmap(Icons::pixmap(Icon::LogDoc, QSize(22, 30), Theme::green));
-            auto* label = new QLabel(text);
+            auto* row = new LogRow;
+            auto* index = MetalUi::lcdLabel(QStringLiteral("%1.").arg(++number));
+            index->setFont(Metal::digitalFont(12));
+            index->setFixedWidth(26);
+            index->setAlignment(Qt::AlignTop | Qt::AlignRight);
+            auto* label = MetalUi::lcdLabel(text);
+            label->setFont(Metal::digitalFont(12));
             label->setWordWrap(true);
-            grid->addWidget(doc, row, 1, Qt::AlignVCenter);
-            grid->addWidget(label, row, 2);
+            label->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+            auto* layout = new QHBoxLayout(row);
+            layout->setContentsMargins(4, 5, 6, 5);
+            layout->setSpacing(10);
+            layout->addWidget(index, 0, Qt::AlignTop);
+            layout->addWidget(label, 1);
             if (entry.audio) {
-                auto* play = new QToolButton;
-                play->setObjectName(QStringLiteral("logPlay"));
-                play->setIcon(Icons::icon(Icon::Play, Theme::green));
-                play->setIconSize(QSize(20, 20));
-                play->setFixedSize(36, 36);
+                auto* play = new RoundButton(Metal::Glyph::Play, 30);
                 play->setToolTip(tr("Play"));
-                play->setCursor(Qt::PointingHandCursor);
-                play->setFocusPolicy(Qt::NoFocus);
-                connect(play, &QToolButton::clicked, this, [this, play, text] { togglePlayback(play, text); });
-                grid->addWidget(play, row, 3, Qt::AlignVCenter);
+                connect(play, &RoundButton::clicked, this, [this, play, row, text] { togglePlayback(play, row, text); });
+                layout->addWidget(play, 0, Qt::AlignTop);
             } else {
-                grid->addItem(new QSpacerItem(36, 36), row, 3);
+                layout->addSpacing(30);
             }
-            ++row;
+            list->addWidget(row);
         }
+        list->addSpacing(6);
     }
-    grid->setRowStretch(row, 1);
+    list->addStretch();
 
     m_playback.setSingleShot(true);
-    connect(&m_playback, &QTimer::timeout, this, [this] { setPlaying(m_playing, false); });
+    connect(&m_playback, &QTimer::timeout, this, [this] { setPlaying(m_playing, m_playingRow, false); });
 
-    auto* layout = Holo::pageLayout(this, tr("Log"));
-    layout->addWidget(Holo::scrollArea(content), 1);
+    auto* panel = new LcdPanel;
+    auto* panelLayout = new QVBoxLayout(panel);
+    panelLayout->setContentsMargins(12, 8, 6, 8);
+    panelLayout->addWidget(MetalUi::scrollArea(content));
+
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(4, 4, 4, 4);
+    layout->addWidget(panel);
 }
 
-void LogPage::togglePlayback(QToolButton* button, const QString& text)
+void LogPage::togglePlayback(RoundButton* button, LogRow* row, const QString& text)
 {
     const bool wasPlaying = m_playing == button;
-    setPlaying(m_playing, false);
+    setPlaying(m_playing, m_playingRow, false);
     if (!wasPlaying) {
         // no audio backend in the demo: "play" for roughly the time it takes to read the entry
-        setPlaying(button, true);
+        setPlaying(button, row, true);
+        Telemetry::report(text);
         m_playback.start(int(1500 + 55 * text.size()));
     }
 }
 
-void LogPage::setPlaying(QToolButton* button, bool playing)
+void LogPage::setPlaying(RoundButton* button, LogRow* row, bool playing)
 {
     if (!button) {
         return;
     }
-    button->setIcon(Icons::icon(playing ? Icon::Stop : Icon::Play, Theme::green));
+    button->setGlyph(playing ? Metal::Glyph::Stop : Metal::Glyph::Play);
+    button->setActive(playing);
     button->setToolTip(playing ? tr("Stop") : tr("Play"));
-    button->setProperty("playing", playing);
-    button->style()->unpolish(button);
-    button->style()->polish(button);
+    row->setPlaying(playing);
+    Telemetry::setPlaying(playing);
     if (playing) {
         m_playing = button;
+        m_playingRow = row;
     } else if (m_playing == button) {
         m_playing = nullptr;
+        m_playingRow = nullptr;
         m_playback.stop();
+        Telemetry::report(statusTip());
     }
 }

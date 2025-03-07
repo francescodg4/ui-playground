@@ -2,7 +2,7 @@
 
 #include <QWidget>
 
-/// Inventory grid on the left, equipment slots around the diver on the right.
+/// Storage grid on an LCD panel, equipped items as round metallic buttons around the diver.
 class InventoryPage : public QWidget {
 public:
     explicit InventoryPage(QWidget* parent = nullptr);

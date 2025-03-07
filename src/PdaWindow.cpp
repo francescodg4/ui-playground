@@ -1,5 +1,6 @@
 #include "PdaWindow.hpp"
 
+#include "PhotoLibrary.hpp"
 #include "Theme.hpp"
 #include "pages/BlueprintsPage.hpp"
 #include "pages/EncyclopediaPage.hpp"
@@ -7,60 +8,56 @@
 #include "pages/LogPage.hpp"
 #include "pages/PhotoPage.hpp"
 #include "pages/PingPage.hpp"
-#include "widgets/PageTransition.hpp"
-#include "widgets/TabBar.hpp"
+#include "widgets/Chrome.hpp"
+#include "widgets/Metal.hpp"
+#include "widgets/Telemetry.hpp"
 
 #include <QPainter>
-#include <QPainterPath>
-#include <QRandomGenerator>
 #include <QShortcut>
 #include <QStackedWidget>
 #include <QVBoxLayout>
-
-#include <cmath>
-
-namespace {
-constexpr qreal Bezel = 12; // blue plastic rim around the screen
-constexpr qreal Margin = 22; // window edge to screen edge
-constexpr qreal Radius = 38;
-constexpr qreal DotSpacing = 30;
-}
 
 PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
     : QWidget(parent)
 {
     setWindowTitle(tr("PDA"));
-    setMinimumSize(760, 460);
+    setWindowFlag(Qt::FramelessWindowHint); // the skin draws its own title bar
+    setMinimumSize(820, 560);
 
-    m_tabs = new TabBar;
+    m_menu = new MenuStrip;
+    m_telemetry = new Telemetry;
     m_stack = new QStackedWidget;
-    QSizePolicy keepSpace = m_stack->sizePolicy();
-    keepSpace.setRetainSizeWhenHidden(true); // hidden while a transition plays in its place
-    m_stack->setSizePolicy(keepSpace);
-    m_transition = new PageTransition(this);
-    connect(m_transition, &PageTransition::finished, m_stack, &QWidget::show);
 
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(int(Margin + 34), int(Margin + 8), int(Margin + 34), int(Margin + 22));
-    layout->setSpacing(8);
-    layout->addWidget(m_tabs);
+    layout->setContentsMargins(6, 6, 6, 10);
+    layout->setSpacing(4);
+    layout->addWidget(new TitleBar(tr("PDA")));
+    layout->addWidget(m_menu);
+    layout->addWidget(m_telemetry);
+    layout->addSpacing(4);
     layout->addWidget(m_stack, 1);
 
-    addPage(Icon::Person, tr("Inventory"), new InventoryPage);
-    addPage(Icon::Wrench, tr("Blueprints"), new BlueprintsPage);
-    addPage(Icon::Pin, tr("Ping Manager"), new PingPage);
-    addPage(Icon::Image, tr("Photo Manager"), new PhotoPage(photos));
-    addPage(Icon::Doc, tr("Log"), new LogPage);
-    addPage(Icon::Book, tr("Encyclopedia"), new EncyclopediaPage);
-    m_tabs->setBadge(1, 1);
-    m_tabs->setBadge(4, LogPage::unreadCount());
+    addPage(tr("&Inventory"), new InventoryPage);
+    addPage(tr("&Blueprints"), new BlueprintsPage);
+    addPage(tr("P&ings"), new PingPage);
+    addPage(tr("&Photos"), new PhotoPage(photos));
+    addPage(tr("&Log"), new LogPage);
+    addPage(tr("&Encyclopedia"), new EncyclopediaPage);
 
-    connect(m_tabs, &TabBar::currentChanged, this, &PdaWindow::showPage);
+    m_telemetry->setCounter(tr("PHOTOS"), int(photos->photos().size()));
+    m_telemetry->setCounter(tr("PINGS"), 3);
+    m_telemetry->setCounter(tr("LOG"), LogPage::unreadCount());
+    connect(photos, &PhotoLibrary::changed, this, [this, photos] { m_telemetry->setCounter(tr("PHOTOS"), int(photos->photos().size())); });
 
-    // keyboard: 1..6 jump to a page, Q / E step through them
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        auto* shortcut = new QShortcut(QKeySequence(Qt::Key_1 + i), this);
-        connect(shortcut, &QShortcut::activated, this, [this, i] { setPage(i); });
+    connect(m_menu, &MenuStrip::currentChanged, this, &PdaWindow::showPage);
+    showPage(0);
+
+    // Alt + underlined letter opens a menu entry; 1..6 and Q / E also work
+    for (int i = 0; i < m_menu->count(); ++i) {
+        auto* alt = new QShortcut(QKeySequence(QStringLiteral("Alt+") + m_menu->mnemonic(i)), this);
+        connect(alt, &QShortcut::activated, this, [this, i] { setPage(i); });
+        auto* digit = new QShortcut(QKeySequence(Qt::Key_1 + i), this);
+        connect(digit, &QShortcut::activated, this, [this, i] { setPage(i); });
     }
     connect(new QShortcut(QKeySequence(Qt::Key_Q), this), &QShortcut::activated, this, [this] {
         setPage((currentPage() + pageCount() - 1) % pageCount());
@@ -71,136 +68,34 @@ PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
     connect(new QShortcut(QKeySequence(Qt::Key_F11), this), &QShortcut::activated, this, [this] {
         setWindowState(windowState() ^ Qt::WindowFullScreen);
     });
-
-    // drifting specks in the water
-    auto* rng = QRandomGenerator::global();
-    for (int i = 0; i < 80; ++i) {
-        m_specks.append({ rng->generateDouble(), rng->generateDouble(), 0.5 + 1.3 * rng->generateDouble(),
-            0.004 + 0.012 * rng->generateDouble(), 0.2 + 0.5 * rng->generateDouble(), 6.28 * rng->generateDouble() });
-    }
-    m_clock.start();
-    connect(&m_animation, &QTimer::timeout, this, [this] { update(screenRect().toAlignedRect()); });
-    m_animation.start(40);
 }
 
-void PdaWindow::addPage(Icon icon, const QString& name, QWidget* page)
+void PdaWindow::addPage(const QString& menuText, QWidget* page)
 {
-    m_tabs->addTab(icon, name);
+    m_menu->addItem(menuText);
     m_stack->addWidget(page);
 }
 
 void PdaWindow::showPage(int index)
 {
-    const int from = m_stack->currentIndex();
-    if (index == from) {
-        return;
-    }
-    if (!m_animate || !isVisible() || from < 0) {
-        m_stack->setCurrentIndex(index);
-        return;
-    }
-    m_transition->finish(); // a click during a transition starts the next one from the settled page
-    const QPixmap before = m_stack->currentWidget()->grab();
     m_stack->setCurrentIndex(index);
-    const QPixmap after = m_stack->currentWidget()->grab();
-    m_transition->setGeometry(m_stack->geometry());
-    m_stack->hide();
-    m_transition->run(before, after, index > from ? 1 : -1);
+    m_telemetry->setPage(m_menu->itemText(index), m_stack->widget(index)->statusTip());
 }
 
 int PdaWindow::pageCount() const { return m_stack->count(); }
 
 int PdaWindow::currentPage() const { return m_stack->currentIndex(); }
 
-void PdaWindow::setPage(int index) { m_tabs->setCurrentIndex(index); }
+void PdaWindow::setPage(int index) { m_menu->setCurrentIndex(index); }
 
 int PdaWindow::pageIndex(QWidget* page) const { return m_stack->indexOf(page); }
 
-QRectF PdaWindow::screenRect() const
-{
-    return QRectF(rect()).adjusted(Margin, Margin, -Margin, -Margin);
-}
+void PdaWindow::setAnimationsEnabled(bool enabled) { m_telemetry->setAnimated(enabled); }
 
 void PdaWindow::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing);
-
-    // underwater backdrop
-    QLinearGradient water(0, 0, 0, height());
-    water.setColorAt(0, Theme::backdropTop);
-    water.setColorAt(1, Theme::backdropBottom);
-    p.fillRect(rect(), water);
-
-    const QRectF screen = screenRect();
-
-    // glow and blue rim
-    for (int i = 5; i >= 1; --i) {
-        QPainterPath halo;
-        halo.addRoundedRect(screen.adjusted(-Bezel - i * 3, -Bezel - i * 3, Bezel + i * 3, Bezel + i * 3), Radius + Bezel + i * 3, Radius + Bezel + i * 3);
-        p.fillPath(halo, QColor(70, 180, 255, 18));
-    }
-    QPainterPath rim;
-    rim.addRoundedRect(screen.adjusted(-Bezel, -Bezel, Bezel, Bezel), Radius + Bezel, Radius + Bezel);
-    QLinearGradient rimFill(screen.topLeft(), screen.bottomLeft());
-    rimFill.setColorAt(0, Theme::bezelTop);
-    rimFill.setColorAt(1, Theme::bezelBottom);
-    p.fillPath(rim, rimFill);
-
-    paintScreen(p, screen);
-}
-
-void PdaWindow::paintScreen(QPainter& p, const QRectF& screen)
-{
-    const qreal t = m_clock.elapsed() / 1000.0;
-    QPainterPath shape;
-    shape.addRoundedRect(screen, Radius, Radius);
-
-    QLinearGradient glass(screen.topLeft(), screen.bottomLeft());
-    glass.setColorAt(0, Theme::screenTop);
-    glass.setColorAt(1, Theme::screenBottom);
-    p.fillPath(shape, glass);
-
-    p.save();
-    p.setClipPath(shape);
-
-    // light rays slanting down from the surface
-    const qreal rays[][2] = { { 0.12, 0.09 }, { 0.30, 0.05 }, { 0.52, 0.12 }, { 0.72, 0.06 }, { 0.90, 0.09 } };
-    for (int i = 0; i < 5; ++i) {
-        const qreal w = rays[i][1] * screen.width();
-        const qreal sway = std::sin(t * 0.5 + i * 1.7);
-        p.save();
-        p.translate(screen.left() + rays[i][0] * screen.width() + sway * 12, screen.top() - 40);
-        p.rotate(24);
-        QLinearGradient beam(0, 0, 0, screen.height() * 1.2);
-        beam.setColorAt(0, QColor(200, 240, 255, int(26 + 14 * sway)));
-        beam.setColorAt(1, QColor(200, 240, 255, 0));
-        p.fillRect(QRectF(-w / 2, 0, w, screen.height() * 1.4), beam);
-        p.restore();
-    }
-
-    // dot grid
-    p.setPen(QPen(QColor(170, 225, 255, 55), 2, Qt::SolidLine, Qt::RoundCap));
-    QList<QPointF> dots;
-    for (qreal y = screen.top() + DotSpacing / 2; y < screen.bottom(); y += DotSpacing) {
-        for (qreal x = screen.left() + DotSpacing / 2; x < screen.right(); x += DotSpacing) {
-            dots.append({ x, y });
-        }
-    }
-    p.drawPoints(dots.constData(), int(dots.size()));
-
-    // particles rising slowly
-    p.setPen(Qt::NoPen);
-    for (const Speck& s : std::as_const(m_specks)) {
-        const qreal y = std::fmod(s.y - s.speed * t + 10.0, 1.0);
-        const qreal x = s.x + 0.01 * std::sin(t * 0.3 + s.phase);
-        p.setBrush(QColor(216, 244, 255, int(255 * s.alpha * (0.7 + 0.3 * std::sin(t + s.phase)))));
-        p.drawEllipse(QPointF(screen.left() + x * screen.width(), screen.top() + y * screen.height()), s.radius, s.radius);
-    }
-
-    // inner glow along the edge
-    p.strokePath(shape, QPen(QColor(120, 210, 255, 70), 18));
-    p.restore();
-
-    p.strokePath(shape, QPen(QColor(215, 240, 255, 200), 2));
+    Metal::frame(p, QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), Theme::radiusPanel);
+    // etched groove around the page module
+    Metal::bevel(p, QRectF(m_stack->geometry()).adjusted(-3, -3, 3, 3), Theme::radiusPanel, false);
 }

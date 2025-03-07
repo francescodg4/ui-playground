@@ -2,10 +2,11 @@
 
 #include "Icons.hpp"
 #include "Theme.hpp"
-#include "widgets/Holo.hpp"
+#include "widgets/Metal.hpp"
+#include "widgets/MetalWidgets.hpp"
+#include "widgets/Telemetry.hpp"
 
 #include <QHBoxLayout>
-#include <QHeaderView>
 #include <QLabel>
 #include <QPainter>
 #include <QPainterPath>
@@ -88,7 +89,7 @@ QTreeWidgetItem* addNodes(const QList<Node>& nodes, QTreeWidget* tree, QTreeWidg
     return peeper;
 }
 
-/// Draws each row as a translucent bar with a chevron for folders; indentation by depth.
+/// Tree rows as glowing LCD text with ▸ / ▾ markers; the open entry sits on a lit row.
 class TopicDelegate : public QStyledItemDelegate {
 public:
     explicit TopicDelegate(QTreeWidget* tree)
@@ -97,7 +98,7 @@ public:
     {
     }
 
-    QSize sizeHint(const QStyleOptionViewItem&, const QModelIndex&) const override { return QSize(200, 27); }
+    QSize sizeHint(const QStyleOptionViewItem&, const QModelIndex&) const override { return QSize(200, 22); }
 
     void paint(QPainter* p, const QStyleOptionViewItem& option, const QModelIndex& index) const override
     {
@@ -106,30 +107,28 @@ public:
             ++depth;
         }
         const bool folder = index.model()->hasChildren(index);
-        const bool selected = index.data(OpenEntryRole).toBool();
-        const bool hover = option.state & QStyle::State_MouseOver;
-
+        const bool open = index.data(OpenEntryRole).toBool();
         p->save();
         p->setRenderHint(QPainter::Antialiasing);
-        const QRectF bar = QRectF(option.rect).adjusted(0.5, 1.5, -0.5, -1.5);
-        p->fillRect(bar, selected ? QColor(60, 160, 255, 150) : hover ? QColor(170, 220, 250, 100)
-                                                                     : QColor(150, 205, 240, 64));
-        p->setPen(QPen(selected ? QColor(220, 245, 255, 200) : QColor(190, 230, 255, 64), 1));
-        p->drawRect(bar);
-
-        const qreal x = bar.left() + 8 + depth * 14;
-        if (folder) {
-            const QPointF c(x + 5, bar.center().y());
-            p->save();
-            p->translate(c);
-            p->rotate(m_tree->isExpanded(index) ? 90 : 0);
-            Icons::paint(*p, Icon::ChevronRight, QRectF(-5, -5, 10, 10), Theme::text);
-            p->restore();
+        const QRectF r = QRectF(option.rect).adjusted(2, 1, -2, -1);
+        if (open || (option.state & QStyle::State_MouseOver)) {
+            p->fillRect(r, open ? Theme::accent : Theme::lcdRow);
         }
-        p->setPen(Theme::text);
-        p->setFont(option.font);
-        p->drawText(QRectF(x + (folder ? 15 : 0) + 2, bar.top(), bar.width(), bar.height()), Qt::AlignVCenter,
-            index.data().toString());
+        const QColor ink = open ? Qt::white : Theme::lcdGlow;
+        const qreal x = r.left() + 6 + depth * 14;
+        if (folder) {
+            QPolygonF arrow;
+            if (m_tree->isExpanded(index)) {
+                arrow << QPointF(x, r.center().y() - 3) << QPointF(x + 8, r.center().y() - 3) << QPointF(x + 4, r.center().y() + 3);
+            } else {
+                arrow << QPointF(x + 1, r.center().y() - 4) << QPointF(x + 7, r.center().y()) << QPointF(x + 1, r.center().y() + 4);
+            }
+            p->setPen(Qt::NoPen);
+            p->setBrush(ink);
+            p->drawPolygon(arrow);
+        }
+        p->setFont(Metal::digitalFont(12, folder));
+        Metal::glowText(*p, QRectF(x + 14, r.top(), r.width(), r.height()), Qt::AlignVCenter, index.data().toString(), ink);
         p->restore();
     }
 
@@ -139,7 +138,7 @@ private:
 
 } // namespace
 
-/// "Bio scan" card: HUD frame, readouts and a fish tinted with the entry's hue.
+/// Bio scan drawn directly on the LCD glass, tinted with the entry's hue.
 class BioScan : public QWidget {
 public:
     BioScan()
@@ -169,17 +168,10 @@ protected:
         p.scale(s, s);
 
         const auto tint = [this](int lightness) { return QColor::fromHsl(m_hue % 360, 150, lightness * 255 / 100); };
-        const QColor hud(0x9f, 0xe6, 0xff);
+        const QColor hud = Theme::lcdGlow;
 
-        QPainterPath card;
-        card.addRoundedRect(QRectF(0.75, 0.75, 398.5, 198.5), 8, 8);
-        QLinearGradient bg(0, 0, 400, 200);
-        bg.setColorAt(0, QColor(0x12, 0x34, 0x4f));
-        bg.setColorAt(1, QColor(0x08, 0x1a, 0x2b));
-        p.fillPath(card, bg);
-        p.setClipPath(card);
 
-        p.setPen(QPen(QColor(45, 111, 154, 150), 0.5));
+        p.setPen(QPen(Theme::lcdDim, 0.5));
         for (int y = 0; y <= 200; y += 25) {
             p.drawLine(0, y, 400, y);
         }
@@ -253,10 +245,6 @@ protected:
             p.drawText(QRectF(markers[i].x() - 6, markers[i].y() - 6, 12, 12), Qt::AlignCenter, QString::number(i + 1));
         }
 
-        p.setClipping(false);
-        p.setBrush(Qt::NoBrush);
-        p.setPen(QPen(QColor(210, 240, 255, 180), 1.5));
-        p.drawPath(card);
     }
 
 private:
@@ -277,38 +265,46 @@ EncyclopediaPage::EncyclopediaPage(QWidget* parent)
     m_tree->setFocusPolicy(Qt::NoFocus);
     m_tree->setItemDelegate(new TopicDelegate(m_tree));
     m_tree->viewport()->setAutoFillBackground(false);
-    m_tree->setMinimumWidth(220);
     m_tree->setCursor(Qt::PointingHandCursor);
 
+    auto* treePanel = new LcdPanel;
+    auto* treeLayout = new QVBoxLayout(treePanel);
+    treeLayout->setContentsMargins(8, 8, 6, 8);
+    treeLayout->addWidget(m_tree);
+
     m_scan = new BioScan;
-    m_title = new QLabel;
-    m_title->setObjectName(QStringLiteral("entryTitle"));
-    m_body = new QLabel;
+    m_title = MetalUi::lcdLabel(QString(), true);
+    m_body = MetalUi::lcdLabel(QString());
+    m_body->setFont(Metal::digitalFont(12));
     m_body->setWordWrap(true);
     m_body->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
     auto* entry = new QWidget;
     auto* entryLayout = new QVBoxLayout(entry);
-    entryLayout->setContentsMargins(0, 0, 14, 0);
-    entryLayout->setSpacing(10);
+    entryLayout->setContentsMargins(0, 0, 8, 0);
+    entryLayout->setSpacing(8);
     entryLayout->addWidget(m_scan);
     entryLayout->addWidget(m_title);
     entryLayout->addWidget(m_body);
     entryLayout->addStretch();
 
-    auto* columns = new QHBoxLayout;
-    columns->setSpacing(18);
-    columns->addWidget(m_tree, 1);
-    columns->addWidget(Holo::scrollArea(entry), 2);
+    auto* entryPanel = new LcdPanel;
+    auto* entryPanelLayout = new QVBoxLayout(entryPanel);
+    entryPanelLayout->setContentsMargins(12, 10, 6, 10);
+    entryPanelLayout->addWidget(MetalUi::scrollArea(entry));
 
-    auto* layout = Holo::pageLayout(this, tr("Encyclopedia"));
-    layout->addLayout(columns, 1);
+    auto* layout = new QHBoxLayout(this);
+    layout->setContentsMargins(4, 4, 4, 4);
+    layout->setSpacing(10);
+    layout->addWidget(treePanel, 2);
+    layout->addWidget(entryPanel, 3);
 
     connect(m_tree, &QTreeWidget::itemClicked, this, [this](QTreeWidgetItem* item) {
         if (item->childCount() > 0) {
             item->setExpanded(!item->isExpanded());
         } else {
             showEntry(item);
+            Telemetry::report(tr("Encyclopedia: %1").arg(item->text(0)));
         }
     });
 
@@ -328,7 +324,9 @@ void EncyclopediaPage::showEntry(QTreeWidgetItem* item)
     m_entry = item;
     m_entry->setData(0, OpenEntryRole, true);
     m_scan->setHue(item->data(0, HueRole).toInt());
-    m_title->setText(item->text(0));
+    m_title->setText(item->text(0).toUpper());
     const QString text = item->data(0, TextRole).toString();
     m_body->setText(text.isEmpty() ? tr("Scan data incomplete. Scan a live specimen with the scanner to complete this entry.") : text);
+    setStatusTip(tr("Entry: %1").arg(item->text(0)));
+    m_tree->viewport()->update();
 }

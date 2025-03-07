@@ -3,20 +3,23 @@
 #include <QTimer>
 #include <QWidget>
 
-class QToolButton;
+class LogRow;
+class RoundButton;
 
-/// Messages received by the PDA, grouped by day, each with a play button.
+/// Messages received by the PDA as a playlist on the LCD; playing one drives the telemetry
+/// (elapsed clock, marquee, visualizer).
 class LogPage : public QWidget {
 public:
     explicit LogPage(QWidget* parent = nullptr);
 
-    /// Number of entries not read yet (shown as the tab badge).
+    /// Number of entries not read yet.
     static int unreadCount();
 
 private:
-    void togglePlayback(QToolButton* button, const QString& text);
-    void setPlaying(QToolButton* button, bool playing);
+    void togglePlayback(RoundButton* button, LogRow* row, const QString& text);
+    void setPlaying(RoundButton* button, LogRow* row, bool playing);
 
-    QToolButton* m_playing = nullptr;
+    RoundButton* m_playing = nullptr;
+    LogRow* m_playingRow = nullptr;
     QTimer m_playback;
 };

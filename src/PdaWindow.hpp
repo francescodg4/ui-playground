@@ -1,17 +1,14 @@
 #pragma once
 
-#include "Icons.hpp"
-
-#include <QElapsedTimer>
-#include <QTimer>
 #include <QWidget>
 
-class PageTransition;
+class MenuStrip;
 class PhotoLibrary;
 class QStackedWidget;
-class TabBar;
+class Telemetry;
 
-/// The PDA: a glowing holographic screen with a tab bar selecting one page at a time.
+/// The PDA as a Winamp Modern skinned window: title bar, textual menu selecting the page,
+/// the telemetry LCD and the page itself inside the metal frame. Pages switch instantly.
 class PdaWindow : public QWidget {
     Q_OBJECT
 public:
@@ -22,27 +19,17 @@ public:
     void setPage(int index);
     int pageIndex(QWidget* page) const;
 
-    /// Page transitions on/off (off for reduced motion and screenshots).
-    void setAnimationsEnabled(bool enabled) { m_animate = enabled; }
+    /// Marquee scrolling and visualizer motion (off for reduced motion and screenshots).
+    void setAnimationsEnabled(bool enabled);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
-    void addPage(Icon icon, const QString& name, QWidget* page);
+    void addPage(const QString& menuText, QWidget* page);
     void showPage(int index);
-    QRectF screenRect() const;
-    void paintScreen(QPainter& p, const QRectF& screen);
 
-    struct Speck {
-        qreal x, y, radius, speed, alpha, phase;
-    };
-
-    TabBar* m_tabs = nullptr;
+    MenuStrip* m_menu = nullptr;
+    Telemetry* m_telemetry = nullptr;
     QStackedWidget* m_stack = nullptr;
-    PageTransition* m_transition = nullptr;
-    bool m_animate = true;
-    QList<Speck> m_specks;
-    QTimer m_animation;
-    QElapsedTimer m_clock;
 };

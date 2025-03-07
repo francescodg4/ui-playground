@@ -1,9 +1,10 @@
 #include "PhotoPage.hpp"
 
-#include "Icons.hpp"
 #include "PhotoLibrary.hpp"
 #include "Theme.hpp"
-#include "widgets/Holo.hpp"
+#include "widgets/Metal.hpp"
+#include "widgets/MetalWidgets.hpp"
+#include "widgets/Telemetry.hpp"
 
 #include <QDir>
 #include <QFileDialog>
@@ -14,64 +15,131 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
-#include <QPushButton>
 #include <QShortcut>
 #include <QStackedWidget>
-#include <QToolButton>
+#include <QStyledItemDelegate>
 
 #include <functional>
 
 namespace {
-const QSize ThumbSize(160, 90);
-const QSize FilmSize(72, 40);
+const QSize ThumbSize(144, 81);
 
-/// Scales @p image to fill @p size and crops the overflow (like CSS object-fit: cover).
 QPixmap cover(const QImage& image, const QSize& size)
 {
     if (image.isNull()) {
         QPixmap empty(size);
-        empty.fill(QColor(0, 30, 60, 120));
+        empty.fill(Theme::lcdBg);
         return empty;
     }
     const QImage scaled = image.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-    const QRect crop(QPoint((scaled.width() - size.width()) / 2, (scaled.height() - size.height()) / 2), size);
-    return QPixmap::fromImage(scaled.copy(crop));
+    return QPixmap::fromImage(scaled.copy(QRect(QPoint((scaled.width() - size.width()) / 2, (scaled.height() - size.height()) / 2), size)));
 }
 
-/// Dark rounded panel behind the viewer.
-class ViewerPanel : public QWidget {
+/// Thumbnails framed in a bevel on the LCD; hover lights the row colour, selection glows.
+class ThumbDelegate : public QStyledItemDelegate {
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    QSize sizeHint(const QStyleOptionViewItem&, const QModelIndex&) const override { return ThumbSize + QSize(16, 16); }
+
+    void paint(QPainter* p, const QStyleOptionViewItem& option, const QModelIndex& index) const override
+    {
+        p->save();
+        p->setRenderHint(QPainter::Antialiasing);
+        const QRectF cell = QRectF(option.rect).adjusted(3, 3, -3, -3);
+        if (option.state & QStyle::State_MouseOver) {
+            QPainterPath bg;
+            bg.addRoundedRect(cell, Theme::radiusPanel, Theme::radiusPanel);
+            p->fillPath(bg, Theme::lcdRow);
+        }
+        const QRectF frame = QRectF(option.rect).adjusted(8, 8, -8, -8);
+        p->drawPixmap(frame.toRect(), index.data(Qt::DecorationRole).value<QIcon>().pixmap(ThumbSize));
+        Metal::bevel(*p, frame.adjusted(-1, -1, 1, 1), 2, false);
+        if (option.state & QStyle::State_Selected) {
+            QColor halo = Theme::lcdGlow;
+            halo.setAlpha(90);
+            p->setPen(QPen(halo, 5));
+            p->drawRoundedRect(frame.adjusted(-3, -3, 3, 3), 4, 4);
+            p->setPen(QPen(Theme::lcdGlow, 1.5));
+            p->drawRoundedRect(frame.adjusted(-3, -3, 3, 3), 4, 4);
+        }
+        p->restore();
+    }
+};
+
+} // namespace
+
+/// Bottom docking tabs switching the page's modules.
+class DockTabs : public QWidget {
+public:
+    std::function<void(int)> onSelect;
+
+    explicit DockTabs(const QStringList& tabs)
+        : m_tabs(tabs)
+    {
+        setFixedHeight(26);
+        setFont(Metal::uiFont(9, true));
+        setCursor(Qt::PointingHandCursor);
+    }
+
+    void setCurrent(int index)
+    {
+        m_current = index;
+        update();
+    }
+
 protected:
+    QRectF tabRect(int i) const { return QRectF(12 + i * 132, 0, 140, height() - 2); }
+
     void paintEvent(QPaintEvent*) override
     {
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
-        QPainterPath shape;
-        shape.addRoundedRect(QRectF(rect()).adjusted(1, 1, -1, -1), 14, 14);
-        p.fillPath(shape, QColor(6, 40, 75, 225));
-        p.strokePath(shape, QPen(Theme::line, 1.5));
+        for (int i = int(m_tabs.size()) - 1; i >= 0; --i) { // current tab drawn last, on top
+            if (i != m_current) {
+                paintTab(p, i);
+            }
+        }
+        paintTab(p, m_current);
     }
+
+    void paintTab(QPainter& p, int i)
+    {
+        const QRectF r = tabRect(i);
+        QPainterPath tab;
+        tab.moveTo(r.left(), r.top());
+        tab.lineTo(r.right(), r.top());
+        tab.lineTo(r.right() - 14, r.bottom() - 4);
+        tab.quadTo(r.right() - 16, r.bottom(), r.right() - 20, r.bottom());
+        tab.lineTo(r.left() + 20, r.bottom());
+        tab.quadTo(r.left() + 16, r.bottom(), r.left() + 14, r.bottom() - 4);
+        tab.closeSubpath();
+        QLinearGradient g(r.topLeft(), r.bottomLeft());
+        g.setColorAt(0, i == m_current ? QColor(0xf4, 0xf6, 0xfa) : QColor(0xc3, 0xca, 0xd6));
+        g.setColorAt(1, i == m_current ? QColor(0xd8, 0xde, 0xe8) : QColor(0xa0, 0xaa, 0xb8));
+        p.fillPath(tab, g);
+        p.strokePath(tab, QPen(Theme::outline, 1));
+        p.setPen(i == m_current ? Theme::text : Theme::textDim);
+        p.drawText(r, Qt::AlignCenter, m_tabs[i]);
+    }
+
+    void mousePressEvent(QMouseEvent* e) override
+    {
+        for (int i = 0; i < m_tabs.size(); ++i) {
+            if (tabRect(i).adjusted(12, 0, -12, 0).contains(e->position()) && onSelect) {
+                onSelect(i);
+            }
+        }
+    }
+
+private:
+    QStringList m_tabs;
+    int m_current = 0;
 };
 
-QToolButton* navButton(Icon icon, const QString& toolTip)
-{
-    auto* button = new QToolButton;
-    button->setObjectName(QStringLiteral("nav"));
-    button->setIcon(Icons::icon(icon));
-    button->setIconSize(QSize(22, 22));
-    button->setFixedSize(42, 76);
-    button->setToolTip(toolTip);
-    button->setCursor(Qt::PointingHandCursor);
-    button->setFocusPolicy(Qt::NoFocus);
-    return button;
-}
-
-} // namespace
-
-/// Shows one photo scaled to fit, with a soft glow; horizontal swipes step through photos.
+/// The open photo, fitted inside the LCD.
 class PhotoView : public QWidget {
 public:
-    std::function<void(int)> onSwipe; ///< -1 previous, +1 next
-
     void setPhoto(const QPixmap& pixmap)
     {
         m_pixmap = pixmap;
@@ -85,31 +153,15 @@ protected:
             return;
         }
         QPainter p(this);
-        p.setRenderHint(QPainter::Antialiasing);
         p.setRenderHint(QPainter::SmoothPixmapTransform);
-        const QSizeF size = QSizeF(m_pixmap.size()).scaled(QSizeF(this->size()) - QSizeF(16, 16), Qt::KeepAspectRatio);
+        const QSizeF size = QSizeF(m_pixmap.size()).scaled(QSizeF(this->size()) - QSizeF(4, 4), Qt::KeepAspectRatio);
         const QRectF target(QPointF((width() - size.width()) / 2, (height() - size.height()) / 2), size);
-        for (int i = 4; i >= 1; --i) {
-            p.setPen(QPen(QColor(100, 200, 255, 22), i * 3));
-            p.drawRect(target);
-        }
         p.drawPixmap(target, m_pixmap, QRectF(m_pixmap.rect()));
-        p.setPen(QPen(QColor(220, 245, 255, 150), 1));
-        p.drawRect(target);
-    }
-
-    void mousePressEvent(QMouseEvent* e) override { m_pressX = e->position().x(); }
-    void mouseReleaseEvent(QMouseEvent* e) override
-    {
-        const qreal dx = e->position().x() - m_pressX;
-        if (std::abs(dx) > 60 && onSwipe) {
-            onSwipe(dx < 0 ? 1 : -1);
-        }
+        Metal::bevel(p, target.adjusted(-1, -1, 1, 1), 2, false);
     }
 
 private:
     QPixmap m_pixmap;
-    qreal m_pressX = 0;
 };
 
 PhotoPage::PhotoPage(PhotoLibrary* library, QWidget* parent)
@@ -120,8 +172,23 @@ PhotoPage::PhotoPage(PhotoLibrary* library, QWidget* parent)
     m_views->addWidget(buildGallery());
     m_views->addWidget(buildViewer());
 
-    auto* layout = Holo::pageLayout(this, tr("Photo Manager"));
+    m_tabs = new DockTabs({ tr("GALLERY"), tr("VIEWER") });
+    m_tabs->onSelect = [this](int i) { i == 0 ? closeViewer() : openPhoto(std::max(0, m_current)); };
+
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(4, 4, 4, 0);
+    layout->setSpacing(0);
     layout->addWidget(m_views, 1);
+    layout->addWidget(m_tabs);
+
+    m_slideshow.setInterval(2500);
+    connect(&m_slideshow, &QTimer::timeout, this, [this] {
+        if (m_current + 1 < m_library->photos().size()) {
+            openPhoto(m_current + 1);
+        } else {
+            setSlideshow(false); // end of the list
+        }
+    });
 
     connect(m_library, &PhotoLibrary::changed, this, &PhotoPage::rebuild);
     rebuild();
@@ -129,105 +196,101 @@ PhotoPage::PhotoPage(PhotoLibrary* library, QWidget* parent)
 
 QWidget* PhotoPage::buildGallery()
 {
-    auto* gallery = new QWidget;
-
-    m_count = new QLabel;
-    m_count->setObjectName(QStringLiteral("dim"));
+    auto* panel = new LcdPanel;
+    m_count = MetalUi::lcdLabel(QString());
     m_count->setToolTip(QDir::toNativeSeparators(m_library->directory()));
-    auto* import = new QPushButton(Icons::icon(Icon::Plus), tr("Import"));
-    import->setObjectName(QStringLiteral("chip"));
-    import->setIconSize(QSize(14, 14));
-    import->setCursor(Qt::PointingHandCursor);
-    import->setFocusPolicy(Qt::NoFocus);
-    connect(import, &QPushButton::clicked, this, &PhotoPage::importPhotos);
+    auto* import = new CapsuleButton(tr("IMPORT"), Metal::Glyph::Eject);
+    connect(import, &CapsuleButton::clicked, this, &PhotoPage::importPhotos);
 
     m_grid = new QListWidget;
-    m_grid->setObjectName(QStringLiteral("gallery"));
     m_grid->setViewMode(QListView::IconMode);
     m_grid->setIconSize(ThumbSize);
-    m_grid->setSpacing(10);
     m_grid->setMovement(QListView::Static);
     m_grid->setResizeMode(QListView::Adjust);
     m_grid->setUniformItemSizes(true);
-    m_grid->setSelectionMode(QAbstractItemView::NoSelection);
+    m_grid->setItemDelegate(new ThumbDelegate(m_grid));
     m_grid->setFocusPolicy(Qt::NoFocus);
     m_grid->setMouseTracking(true);
     m_grid->viewport()->setAutoFillBackground(false);
     m_grid->setCursor(Qt::PointingHandCursor);
-    connect(m_grid, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) { openPhoto(m_grid->row(item)); });
-
-    m_empty = new QLabel(tr("No photos acquired yet."));
-    m_empty->setObjectName(QStringLiteral("dim"));
-    m_empty->setAlignment(Qt::AlignCenter);
+    connect(m_grid, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
+        const Photo& photo = m_library->photos().at(m_grid->row(item));
+        Telemetry::report(tr("%1 - %2").arg(photo.name, photo.acquired.toString(QStringLiteral("yyyy-MM-dd HH:mm"))));
+    });
+    connect(m_grid, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) { openPhoto(m_grid->row(item)); });
 
     auto* bar = new QHBoxLayout;
     bar->addWidget(m_count);
     bar->addStretch();
     bar->addWidget(import);
-    bar->addSpacing(16);
 
-    auto* layout = new QVBoxLayout(gallery);
-    layout->setContentsMargins(0, 0, 0, 0);
+    auto* layout = new QVBoxLayout(panel);
+    layout->setContentsMargins(12, 8, 10, 8);
     layout->addLayout(bar);
     layout->addWidget(m_grid, 1);
-    layout->addWidget(m_empty, 1);
-    return gallery;
+    return panel;
 }
 
 QWidget* PhotoPage::buildViewer()
 {
-    m_viewer = new ViewerPanel;
+    m_viewer = new QWidget;
     m_viewer->setFocusPolicy(Qt::StrongFocus);
 
-    m_name = new QLabel;
-    m_name->setStyleSheet(QStringLiteral("font-weight: bold;"));
-    m_meta = new QLabel;
-    m_meta->setObjectName(QStringLiteral("dim"));
-    auto* remove = Holo::roundButton(Icon::Trash, tr("Delete photo (Del)"));
-    auto* close = Holo::roundButton(Icon::Close, tr("Close (Esc)"));
-
-    m_prev = navButton(Icon::ChevronLeft, tr("Previous (Left)"));
-    m_next = navButton(Icon::ChevronRight, tr("Next (Right)"));
+    auto* screen = new LcdPanel;
     m_view = new PhotoView;
-    m_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    m_view->onSwipe = [this](int step) { openPhoto(m_current + step); };
+    auto* screenLayout = new QVBoxLayout(screen);
+    screenLayout->setContentsMargins(10, 10, 10, 10);
+    screenLayout->addWidget(m_view);
 
-    m_filmstrip = new QListWidget;
-    m_filmstrip->setObjectName(QStringLiteral("filmstrip"));
-    m_filmstrip->setViewMode(QListView::IconMode);
-    m_filmstrip->setWrapping(false);
-    m_filmstrip->setFlow(QListView::LeftToRight);
-    m_filmstrip->setMovement(QListView::Static);
-    m_filmstrip->setIconSize(FilmSize);
-    m_filmstrip->setSpacing(4);
-    m_filmstrip->setFixedHeight(FilmSize.height() + 26);
-    m_filmstrip->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_filmstrip->setFocusPolicy(Qt::NoFocus);
-    m_filmstrip->viewport()->setAutoFillBackground(false);
-    connect(m_filmstrip, &QListWidget::currentRowChanged, this, &PhotoPage::openPhoto);
+    m_position = new PositionSlider;
+    connect(m_position, &PositionSlider::valueChanged, this, &PhotoPage::openPhoto);
+    auto* eject = new CapsuleButton(QString(), Metal::Glyph::Eject);
+    eject->setToolTip(tr("Import photos"));
+    auto* playlist = new CapsuleButton(tr("PL"));
+    playlist->setToolTip(tr("Back to the gallery (Esc)"));
+    auto* remove = new CapsuleButton(tr("DEL"));
+    remove->setToolTip(tr("Delete photo (Del)"));
+    connect(eject, &CapsuleButton::clicked, this, &PhotoPage::importPhotos);
+    connect(playlist, &CapsuleButton::clicked, this, &PhotoPage::closeViewer);
+    connect(remove, &CapsuleButton::clicked, this, &PhotoPage::deleteCurrent);
 
-    auto* top = new QHBoxLayout;
-    top->addWidget(m_name);
-    top->addSpacing(10);
-    top->addWidget(m_meta, 1);
-    top->addWidget(remove);
-    top->addWidget(close);
+    auto* seek = new QHBoxLayout;
+    seek->setSpacing(6);
+    seek->addWidget(m_position, 1);
+    seek->addWidget(eject);
+    seek->addWidget(playlist);
+    seek->addWidget(remove);
 
-    auto* stage = new QHBoxLayout;
-    stage->addWidget(m_prev);
-    stage->addWidget(m_view, 1);
-    stage->addWidget(m_next);
+    m_prev = new RoundButton(Metal::Glyph::Rewind, 40);
+    m_play = new RoundButton(Metal::Glyph::Play, 40);
+    auto* pause = new RoundButton(Metal::Glyph::Pause, 40);
+    auto* stop = new RoundButton(Metal::Glyph::Stop, 40);
+    m_next = new RoundButton(Metal::Glyph::Forward, 40);
+    m_prev->setToolTip(tr("Previous (Left)"));
+    m_play->setToolTip(tr("Slideshow (Space)"));
+    m_next->setToolTip(tr("Next (Right)"));
+    connect(m_prev, &RoundButton::clicked, this, [this] { openPhoto(m_current - 1); });
+    connect(m_next, &RoundButton::clicked, this, [this] { openPhoto(m_current + 1); });
+    connect(m_play, &RoundButton::clicked, this, [this] { setSlideshow(true); });
+    connect(pause, &RoundButton::clicked, this, [this] { setSlideshow(false); });
+    connect(stop, &RoundButton::clicked, this, [this] {
+        setSlideshow(false);
+        openPhoto(0);
+    });
+
+    auto* deck = new QHBoxLayout;
+    deck->setSpacing(4);
+    for (RoundButton* b : { m_prev, m_play, pause, stop, m_next }) {
+        deck->addWidget(b);
+    }
+    deck->addStretch();
 
     auto* layout = new QVBoxLayout(m_viewer);
-    layout->setContentsMargins(12, 10, 12, 8);
-    layout->addLayout(top);
-    layout->addLayout(stage, 1);
-    layout->addWidget(m_filmstrip);
-
-    connect(m_prev, &QToolButton::clicked, this, [this] { openPhoto(m_current - 1); });
-    connect(m_next, &QToolButton::clicked, this, [this] { openPhoto(m_current + 1); });
-    connect(close, &QToolButton::clicked, this, &PhotoPage::closeViewer);
-    connect(remove, &QToolButton::clicked, this, &PhotoPage::deleteCurrent);
+    layout->setContentsMargins(0, 0, 0, 4);
+    layout->setSpacing(6);
+    layout->addWidget(screen, 1);
+    layout->addLayout(seek);
+    layout->addLayout(deck);
 
     const auto shortcut = [this](QKeySequence key, auto slot) {
         auto* s = new QShortcut(key, m_viewer);
@@ -238,6 +301,7 @@ QWidget* PhotoPage::buildViewer()
     shortcut(QKeySequence(Qt::Key_Right), [this] { openPhoto(m_current + 1); });
     shortcut(QKeySequence(Qt::Key_Escape), [this] { closeViewer(); });
     shortcut(QKeySequence(Qt::Key_Delete), [this] { deleteCurrent(); });
+    shortcut(QKeySequence(Qt::Key_Space), [this] { setSlideshow(!m_slideshow.isActive()); });
     return m_viewer;
 }
 
@@ -255,31 +319,23 @@ QPixmap PhotoPage::thumbnail(int index)
 void PhotoPage::rebuild()
 {
     const QList<Photo>& photos = m_library->photos();
-    m_count->setText(photos.size() == 1 ? tr("1 photo") : tr("%1 photos").arg(photos.size()));
-    m_grid->setVisible(!photos.isEmpty());
-    m_empty->setVisible(photos.isEmpty());
+    const QString count = photos.size() == 1 ? tr("1 PHOTO") : tr("%1 PHOTOS").arg(photos.size());
+    m_count->setText(count);
+    setStatusTip(count.toLower());
 
     m_grid->clear();
-    m_filmstrip->blockSignals(true);
-    m_filmstrip->clear();
     for (int i = 0; i < photos.size(); ++i) {
-        const QPixmap thumb = thumbnail(i);
-        const QString tip = QStringLiteral("%1\n%2").arg(photos[i].name, photos[i].acquired.toString(QStringLiteral("yyyy-MM-dd HH:mm")));
-        auto* item = new QListWidgetItem(QIcon(thumb), QString(), m_grid);
-        item->setSizeHint(ThumbSize + QSize(2, 2));
-        item->setToolTip(tip);
-        auto* film = new QListWidgetItem(QIcon(thumb), QString(), m_filmstrip);
-        film->setSizeHint(FilmSize + QSize(4, 4));
-        film->setToolTip(photos[i].name);
+        auto* item = new QListWidgetItem(QIcon(thumbnail(i)), QString(), m_grid);
+        item->setToolTip(photos[i].name);
     }
-    m_filmstrip->blockSignals(false);
+    m_position->setMaximum(std::max(0, int(photos.size()) - 1));
 
     if (isViewerOpen()) {
         if (photos.isEmpty()) {
             closeViewer();
         } else {
             const int keep = std::min(m_current, int(photos.size()) - 1);
-            m_current = -1; // force a reload: the file at this index may have changed
+            m_current = -1;
             openPhoto(keep);
         }
     }
@@ -295,27 +351,33 @@ void PhotoPage::openPhoto(int index)
         m_current = index;
         const Photo& photo = photos[index];
         m_view->setPhoto(QPixmap(photo.path));
-        m_name->setText(photo.name);
-        m_meta->setText(QStringLiteral("%1 / %2   ·   %3").arg(index + 1).arg(photos.size()).arg(photo.acquired.toString(QStringLiteral("yyyy-MM-dd HH:mm"))));
+        m_position->setValue(index);
         m_prev->setEnabled(index > 0);
         m_next->setEnabled(index < photos.size() - 1);
-        const QSignalBlocker block(m_filmstrip);
-        m_filmstrip->setCurrentRow(index);
-        m_filmstrip->scrollToItem(m_filmstrip->item(index), QAbstractItemView::PositionAtCenter);
+        m_grid->setCurrentRow(index);
+        Telemetry::report(tr("Photo %1/%2 - %3 - %4").arg(index + 1).arg(photos.size()).arg(photo.name, photo.acquired.toString(QStringLiteral("yyyy-MM-dd HH:mm"))));
     }
     m_views->setCurrentWidget(m_viewer);
+    m_tabs->setCurrent(1);
     m_viewer->setFocus();
 }
 
 void PhotoPage::closeViewer()
 {
+    setSlideshow(false);
     m_views->setCurrentIndex(0);
-    m_current = -1;
+    m_tabs->setCurrent(0);
 }
 
 bool PhotoPage::isViewerOpen() const
 {
     return m_views->currentWidget() == m_viewer;
+}
+
+void PhotoPage::setSlideshow(bool running)
+{
+    running ? m_slideshow.start() : m_slideshow.stop();
+    m_play->setActive(running); // blue-accented Play while the slideshow runs
 }
 
 void PhotoPage::importPhotos()
