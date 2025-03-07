@@ -2,12 +2,12 @@
 
 #include <QWidget>
 
-class BioScan;
-class QLabel;
+class PixelLabel;
 class QTreeWidget;
 class QTreeWidgetItem;
+class ScanScreen;
 
-/// Collapsible tree of topics on the left, the selected entry (scan image and text) on the right.
+/// Topic tree on a party deck; the open entry's scan on a data window and its text on lined paper.
 class EncyclopediaPage : public QWidget {
 public:
     explicit EncyclopediaPage(QWidget* parent = nullptr);
@@ -16,8 +16,8 @@ private:
     void showEntry(QTreeWidgetItem* item);
 
     QTreeWidget* m_tree;
-    BioScan* m_scan;
-    QLabel* m_title;
-    QLabel* m_body;
+    ScanScreen* m_scan;
+    PixelLabel* m_title;
+    PixelLabel* m_body;
     QTreeWidgetItem* m_entry = nullptr;
 };

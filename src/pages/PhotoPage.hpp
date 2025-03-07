@@ -1,17 +1,18 @@
 #pragma once
 
 #include <QHash>
-#include <QPixmap>
+#include <QImage>
 #include <QWidget>
 
+class DataScreen;
 class PhotoLibrary;
-class PhotoView;
-class QLabel;
+class PixelKey;
+class PixelLabel;
 class QListWidget;
 class QStackedWidget;
-class QToolButton;
 
-/// Gallery of the acquired images with a full-size viewer (previous / next / delete).
+/// Box of acquired photos with a data window preview, and a full-size viewer
+/// (previous / next / delete / back).
 class PhotoPage : public QWidget {
     Q_OBJECT
 public:
@@ -25,24 +26,26 @@ private:
     QWidget* buildGallery();
     QWidget* buildViewer();
     void rebuild();
+    void select(int index);
     void importPhotos();
     void deleteCurrent();
-    QPixmap thumbnail(int index);
+    QImage thumbnail(int index);
 
     PhotoLibrary* m_library;
     QStackedWidget* m_views = nullptr;
     QListWidget* m_grid = nullptr;
-    QLabel* m_count = nullptr;
-    QLabel* m_empty = nullptr;
+    DataScreen* m_preview = nullptr;
+    PixelLabel* m_info = nullptr;
+    PixelLabel* m_count = nullptr;
+    PixelKey* m_view = nullptr;
 
     QWidget* m_viewer = nullptr;
-    PhotoView* m_view = nullptr;
-    QLabel* m_name = nullptr;
-    QLabel* m_meta = nullptr;
-    QToolButton* m_prev = nullptr;
-    QToolButton* m_next = nullptr;
-    QListWidget* m_filmstrip = nullptr;
+    DataScreen* m_screen = nullptr;
+    PixelLabel* m_counter = nullptr;
+    PixelKey* m_prev = nullptr;
+    PixelKey* m_next = nullptr;
+    int m_selected = -1;
     int m_current = -1;
 
-    QHash<QString, QPixmap> m_thumbnails; ///< keyed by path + modification time
+    QHash<QString, QImage> m_thumbnails; ///< pixelated, keyed by path + modification time
 };

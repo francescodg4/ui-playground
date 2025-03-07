@@ -24,9 +24,9 @@ qt_add_executable(pda
   src/pages/LogPage.cpp src/pages/LogPage.hpp
   src/pages/PhotoPage.cpp src/pages/PhotoPage.hpp
   src/pages/PingPage.cpp src/pages/PingPage.hpp
-  src/widgets/Holo.cpp src/widgets/Holo.hpp
-  src/widgets/PageTransition.cpp src/widgets/PageTransition.hpp
-  src/widgets/TabBar.cpp src/widgets/TabBar.hpp
+  src/widgets/BoxHeader.cpp src/widgets/BoxHeader.hpp
+  src/widgets/Pixel.cpp src/widgets/Pixel.hpp
+  src/widgets/PixelWidgets.cpp src/widgets/PixelWidgets.hpp
 )
 
 target_include_directories(pda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

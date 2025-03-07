@@ -1,17 +1,16 @@
 #pragma once
 
 #include "Icons.hpp"
+#include "widgets/Pixel.hpp"
 
-#include <QElapsedTimer>
-#include <QTimer>
 #include <QWidget>
 
-class PageTransition;
+class BoxHeader;
 class PhotoLibrary;
 class QStackedWidget;
-class TabBar;
 
-/// The PDA: a glowing holographic screen with a tab bar selecting one page at a time.
+/// The PDA as a storage-box screen: box header menu on top, the current page drawn over its
+/// wallpaper container. Pages switch instantly (no transitions).
 class PdaWindow : public QWidget {
     Q_OBJECT
 public:
@@ -22,27 +21,12 @@ public:
     void setPage(int index);
     int pageIndex(QWidget* page) const;
 
-    /// Page transitions on/off (off for reduced motion and screenshots).
-    void setAnimationsEnabled(bool enabled) { m_animate = enabled; }
-
 protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
-    void addPage(Icon icon, const QString& name, QWidget* page);
-    void showPage(int index);
-    QRectF screenRect() const;
-    void paintScreen(QPainter& p, const QRectF& screen);
+    void addPage(Icon icon, const QString& name, Pixel::Wallpaper wallpaper, QWidget* page);
 
-    struct Speck {
-        qreal x, y, radius, speed, alpha, phase;
-    };
-
-    TabBar* m_tabs = nullptr;
+    BoxHeader* m_header = nullptr;
     QStackedWidget* m_stack = nullptr;
-    PageTransition* m_transition = nullptr;
-    bool m_animate = true;
-    QList<Speck> m_specks;
-    QTimer m_animation;
-    QElapsedTimer m_clock;
 };

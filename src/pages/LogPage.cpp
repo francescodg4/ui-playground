@@ -2,13 +2,16 @@
 
 #include "Icons.hpp"
 #include "Theme.hpp"
-#include "widgets/Holo.hpp"
+#include "widgets/Pixel.hpp"
+#include "widgets/PixelWidgets.hpp"
 
-#include <QGridLayout>
-#include <QLabel>
+#include <QHBoxLayout>
 #include <QScrollArea>
-#include <QStyle>
-#include <QToolButton>
+#include <QVBoxLayout>
+
+#include <algorithm>
+
+using Pixel::Scale;
 
 namespace {
 
@@ -48,6 +51,29 @@ const QList<Day>& logDays()
 
 } // namespace
 
+/// One message on lined paper; while it plays the glove points at it.
+class LogRow : public PaperBox {
+public:
+    void setPlaying(bool playing)
+    {
+        m_playing = playing;
+        update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent* event) override
+    {
+        PaperBox::paintEvent(event);
+        if (m_playing) {
+            Pixel::Canvas canvas(this);
+            Pixel::hand(canvas.p(), QPoint(15, canvas.rect().center().y()), Pixel::Direction::Right);
+        }
+    }
+
+private:
+    bool m_playing = false;
+};
+
 int LogPage::unreadCount()
 {
     int count = 0;
@@ -61,78 +87,67 @@ LogPage::LogPage(QWidget* parent)
     : QWidget(parent)
 {
     auto* content = new QWidget;
-    auto* grid = new QGridLayout(content);
-    grid->setContentsMargins(4, 4, 30, 4);
-    grid->setHorizontalSpacing(22);
-    grid->setVerticalSpacing(24);
-    grid->setColumnMinimumWidth(0, 12);
-    grid->setColumnStretch(2, 1);
+    auto* list = new QVBoxLayout(content);
+    list->setContentsMargins(2 * Scale, 2 * Scale, 6 * Scale, 2 * Scale);
+    list->setSpacing(4 * Scale);
 
-    int row = 0;
     for (const Day& day : logDays()) {
-        auto* title = new QLabel(QString::fromLatin1(day.title));
-        title->setObjectName(QStringLiteral("day"));
-        grid->addWidget(title, row++, 0, 1, 4);
-
+        list->addWidget(new BannerStrip(QString::fromLatin1(day.title).toUpper(), Pixel::Wallpaper::Beach));
         for (const Entry& entry : day.entries) {
             const QString text = QString::fromLatin1(entry.text);
-            auto* doc = new QLabel;
-            doc->setPixmap(Icons::pixmap(Icon::LogDoc, QSize(22, 30), Theme::green));
-            auto* label = new QLabel(text);
+            auto* row = new LogRow;
+            auto* label = new PixelLabel(text);
             label->setWordWrap(true);
-            grid->addWidget(doc, row, 1, Qt::AlignVCenter);
-            grid->addWidget(label, row, 2);
+            auto* layout = new QHBoxLayout(row);
+            layout->setContentsMargins(18 * Scale, 5 * Scale, 8 * Scale, 5 * Scale);
+            layout->setSpacing(8 * Scale);
+            layout->addWidget(new SpriteLabel(Icon::LogDoc, 14, Theme::primaryGreen), 0, Qt::AlignVCenter);
+            layout->addWidget(label, 1);
             if (entry.audio) {
-                auto* play = new QToolButton;
-                play->setObjectName(QStringLiteral("logPlay"));
-                play->setIcon(Icons::icon(Icon::Play, Theme::green));
-                play->setIconSize(QSize(20, 20));
-                play->setFixedSize(36, 36);
-                play->setToolTip(tr("Play"));
-                play->setCursor(Qt::PointingHandCursor);
-                play->setFocusPolicy(Qt::NoFocus);
-                connect(play, &QToolButton::clicked, this, [this, play, text] { togglePlayback(play, text); });
-                grid->addWidget(play, row, 3, Qt::AlignVCenter);
+                auto* play = new PixelKey(tr("PLAY"), Theme::keyYellow);
+                connect(play, &PixelKey::clicked, this, [this, play, row, text] { togglePlayback(play, row, text); });
+                layout->addWidget(play, 0, Qt::AlignVCenter);
             } else {
-                grid->addItem(new QSpacerItem(36, 36), row, 3);
+                layout->addSpacing(Pixel::keyWidth(tr("PLAY")) * Scale);
             }
-            ++row;
+            list->addWidget(row);
         }
     }
-    grid->setRowStretch(row, 1);
+    list->addStretch();
 
     m_playback.setSingleShot(true);
-    connect(&m_playback, &QTimer::timeout, this, [this] { setPlaying(m_playing, false); });
+    connect(&m_playback, &QTimer::timeout, this, [this] { setPlaying(m_playing, m_playingRow, false); });
 
-    auto* layout = Holo::pageLayout(this, tr("Log"));
-    layout->addWidget(Holo::scrollArea(content), 1);
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(4 * Scale, 2 * Scale, 2 * Scale, 2 * Scale);
+    layout->addWidget(PixelUi::scrollArea(content));
 }
 
-void LogPage::togglePlayback(QToolButton* button, const QString& text)
+void LogPage::togglePlayback(PixelKey* key, LogRow* row, const QString& text)
 {
-    const bool wasPlaying = m_playing == button;
-    setPlaying(m_playing, false);
+    const bool wasPlaying = m_playing == key;
+    setPlaying(m_playing, m_playingRow, false);
     if (!wasPlaying) {
         // no audio backend in the demo: "play" for roughly the time it takes to read the entry
-        setPlaying(button, true);
+        setPlaying(key, row, true);
         m_playback.start(int(1500 + 55 * text.size()));
     }
 }
 
-void LogPage::setPlaying(QToolButton* button, bool playing)
+void LogPage::setPlaying(PixelKey* key, LogRow* row, bool playing)
 {
-    if (!button) {
+    if (!key) {
         return;
     }
-    button->setIcon(Icons::icon(playing ? Icon::Stop : Icon::Play, Theme::green));
-    button->setToolTip(playing ? tr("Stop") : tr("Play"));
-    button->setProperty("playing", playing);
-    button->style()->unpolish(button);
-    button->style()->polish(button);
+    key->setLabel(playing ? tr("STOP") : tr("PLAY"));
+    key->setFace(playing ? Theme::kbdLowerOrange : Theme::keyYellow);
+    row->setPlaying(playing);
     if (playing) {
-        m_playing = button;
-    } else if (m_playing == button) {
+        m_playing = key;
+        m_playingRow = row;
+    } else if (m_playing == key) {
         m_playing = nullptr;
+        m_playingRow = nullptr;
         m_playback.stop();
     }
 }

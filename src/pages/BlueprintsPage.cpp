@@ -2,13 +2,14 @@
 
 #include "Icons.hpp"
 #include "Theme.hpp"
-#include "widgets/Holo.hpp"
+#include "widgets/Pixel.hpp"
+#include "widgets/PixelWidgets.hpp"
 
 #include <QGridLayout>
-#include <QLabel>
-#include <QPainter>
 #include <QScrollArea>
 #include <QVBoxLayout>
+
+using Pixel::Scale;
 
 namespace {
 
@@ -65,15 +66,16 @@ const QList<Category>& categories()
     return list;
 }
 
-/// Round token with the item icon and its name underneath.
+/// Sprite on a tile with its name; the glove points at the hovered one.
 class BlueprintTile : public QWidget {
 public:
+    static constexpr int Width = 80, Height = 66;
+
     explicit BlueprintTile(const Blueprint& bp)
         : m_bp(bp)
     {
         setToolTip(QString::fromLatin1(bp.name));
-        setMinimumSize(96, 100);
-        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        setFixedSize(Width * Scale, Height * Scale);
         setAttribute(Qt::WA_Hover);
         setCursor(Qt::PointingHandCursor);
     }
@@ -81,41 +83,25 @@ public:
 protected:
     void paintEvent(QPaintEvent*) override
     {
-        QPainter p(this);
-        p.setRenderHint(QPainter::Antialiasing);
-        const qreal d = 58;
-        const QRectF disc(width() / 2.0 - d / 2, 2, d, d);
-
+        Pixel::Canvas canvas(this);
+        QPainter& p = canvas.p();
+        const QRect tile(Width / 2 - 15, 11, 30, 28);
         if (underMouse()) {
-            p.setPen(QPen(QColor(140, 220, 255, 110), 6));
-            p.drawEllipse(disc);
+            Pixel::highlightTile(p, tile);
+        } else {
+            Pixel::chamfer(p, tile, Theme::metalLight, Theme::metalDark, 2);
         }
-        QRadialGradient g(disc.center() - QPointF(0, d * 0.1), d * 0.6);
-        g.setColorAt(0, QColor(170, 225, 255, 130));
-        g.setColorAt(1, QColor(40, 115, 190, 90));
-        p.setBrush(g);
-        p.setPen(QPen(QColor(215, 240, 255, 165), 1.5));
-        p.drawEllipse(disc);
-        Icons::paint(p, m_bp.icon, disc.adjusted(11, 11, -11, -11), m_bp.accent);
-
+        p.drawImage(tile.left() + 3, tile.top() + 2, Pixel::sprite(m_bp.icon, 24, m_bp.accent));
         if (m_bp.isNew) {
-            p.save();
-            const QPointF c = disc.topRight() + QPointF(-6, 6);
-            p.setPen(Qt::NoPen);
-            p.setBrush(Theme::badge);
-            p.drawEllipse(c, 7.5, 7.5);
-            QFont f = font();
-            f.setBold(true);
-            f.setPixelSize(10);
-            p.setFont(f);
-            p.setPen(QColor(0x3b, 0x24, 0x00));
-            p.drawText(QRectF(c.x() - 8, c.y() - 8, 16, 16), Qt::AlignCenter, QStringLiteral("!"));
-            p.restore();
+            const QRect tag(tile.right() - 8, tile.top() - 4, 14, 8);
+            Pixel::chamfer(p, tag, Theme::badge, Theme::borderDark, 1);
+            Pixel::text(p, tag.adjusted(1, -1, 0, 0), Qt::AlignCenter, QStringLiteral("N"), Theme::lightText, Theme::badge.darker(160));
         }
-
-        p.setPen(Theme::text);
-        p.drawText(QRectF(0, disc.bottom() + 5, width(), height() - disc.bottom() - 5),
-            Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, QString::fromLatin1(m_bp.name));
+        Pixel::text(p, QRect(1, tile.bottom() + 2, Width - 3, 24), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap,
+            QString::fromLatin1(m_bp.name), Theme::text, Theme::textShadow);
+        if (underMouse()) {
+            Pixel::hand(p, QPoint(tile.center().x(), tile.top() + 1), Pixel::Direction::Down);
+        }
     }
 
 private:
@@ -130,27 +116,22 @@ BlueprintsPage::BlueprintsPage(QWidget* parent)
     constexpr int Columns = 6;
     auto* content = new QWidget;
     auto* list = new QVBoxLayout(content);
-    list->setContentsMargins(0, 0, 12, 0);
-    list->setSpacing(12);
+    list->setContentsMargins(2 * Scale, 2 * Scale, 6 * Scale, 2 * Scale);
+    list->setSpacing(4 * Scale);
 
     for (const Category& cat : categories()) {
-        auto* header = new QLabel(QString::fromLatin1(cat.name));
-        header->setObjectName(QStringLiteral("category"));
-        list->addWidget(header);
-
+        list->addWidget(new BannerStrip(QString::fromLatin1(cat.name).toUpper(), Pixel::Wallpaper::City));
         auto* grid = new QGridLayout;
-        grid->setHorizontalSpacing(6);
-        grid->setVerticalSpacing(10);
+        grid->setSpacing(0);
         for (int i = 0; i < cat.items.size(); ++i) {
             grid->addWidget(new BlueprintTile(cat.items[i]), i / Columns, i % Columns);
         }
-        for (int c = 0; c < Columns; ++c) {
-            grid->setColumnStretch(c, 1);
-        }
+        grid->setColumnStretch(Columns, 1);
         list->addLayout(grid);
     }
     list->addStretch();
 
-    auto* layout = Holo::pageLayout(this, tr("Blueprints"));
-    layout->addWidget(Holo::scrollArea(content), 1);
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(4 * Scale, 2 * Scale, 2 * Scale, 2 * Scale);
+    layout->addWidget(PixelUi::scrollArea(content));
 }

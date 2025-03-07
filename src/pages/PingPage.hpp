@@ -2,7 +2,7 @@
 
 #include <QWidget>
 
-/// Tracked signals: visibility toggle, icon, name and a colour picker per ping.
+/// Tracked signals: show/hide key, sprite, name and a colour swatch picker per ping.
 class PingPage : public QWidget {
 public:
     explicit PingPage(QWidget* parent = nullptr);

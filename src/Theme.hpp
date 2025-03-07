@@ -1,33 +1,39 @@
 #pragma once
 
 #include <QColor>
-#include <QFont>
 #include <QString>
 
-/// Colours and the application style sheet of the holographic PDA look.
+/// Indexed palette of the GBA "storage box" interface (Pokémon Emerald box system).
 namespace Theme {
 
-inline const QColor backdropTop { 0x1a, 0x7f, 0xd0 };
-inline const QColor backdropBottom { 0x06, 0x2a, 0x4d };
-inline const QColor bezelTop { 0x3a, 0xa0, 0xff };
-inline const QColor bezelBottom { 0x15, 0x5c, 0xcf };
-inline const QColor screenTop { 40, 125, 200 };
-inline const QColor screenBottom { 10, 62, 115 };
+// skill tokens
+inline const QColor primaryGreen { 0x38, 0x98, 0x88 };
+inline const QColor darkGreen { 0x18, 0x50, 0x48 };
+inline const QColor cream { 0xf8, 0xf8, 0xe0 };
+inline const QColor borderDark { 0x28, 0x28, 0x28 };
+inline const QColor lcdBlue { 0x78, 0xa8, 0xc0 };
+inline const QColor kbdUpperBlue { 0x80, 0xc0, 0xd8 };
+inline const QColor kbdLowerOrange { 0xd8, 0x98, 0x78 };
+inline const QColor kbdNumGreen { 0x90, 0xd0, 0x88 };
 
-inline const QColor text { 0xee, 0xf8, 0xff };
-inline const QColor textDim { 0xa9, 0xcf, 0xe8 };
-inline const QColor line { 185, 230, 255, 140 };
-inline const QColor lineSoft { 185, 230, 255, 56 };
-inline const QColor cyan { 0x7f, 0xe6, 0xff };
-inline const QColor gold { 0xf3, 0xc7, 0x42 };
-inline const QColor green { 0x5e, 0xf0, 0xb4 };
-inline const QColor active { 0x1f, 0x86, 0xff };
-inline const QColor badge { 0xf6, 0xa6, 0x23 };
+// supporting palette entries
+inline const QColor white { 0xf8, 0xf8, 0xf8 };
+inline const QColor text { 0x40, 0x40, 0x40 }; ///< dark text on light surfaces
+inline const QColor textShadow { 0xd0, 0xd0, 0xc8 }; ///< its light drop shadow
+inline const QColor lightText { 0xf8, 0xf8, 0xf8 }; ///< text on dark surfaces
+inline const QColor lightTextShadow { 0x50, 0x50, 0x58 };
+inline const QColor dimText { 0x90, 0x90, 0x88 };
+inline const QColor paperLine { 0xe8, 0xe0, 0xb8 };
+inline const QColor highlight { 0xf8, 0xf0, 0x90 }; ///< highlighted selection tile
+inline const QColor metal { 0xa8, 0xa8, 0xb8 };
+inline const QColor metalLight { 0xd8, 0xd8, 0xe0 };
+inline const QColor metalDark { 0x68, 0x68, 0x78 };
+inline const QColor crtDark { 0x38, 0x68, 0x88 };
+inline const QColor keyYellow { 0xf0, 0xd8, 0x60 };
+inline const QColor keyGray { 0xc0, 0xc0, 0xc8 };
+inline const QColor badge { 0xe0, 0x50, 0x40 };
 
-/// Global Qt style sheet (scroll bars, buttons, labels, item views).
+/// Global Qt style sheet (pixel scroll bars, dialogs).
 QString styleSheet();
-
-/// Uppercase, letter-spaced font used by section titles.
-QFont titleFont();
 
 } // namespace Theme

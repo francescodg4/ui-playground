@@ -3,9 +3,10 @@
 #include <QTimer>
 #include <QWidget>
 
-class QToolButton;
+class LogRow;
+class PixelKey;
 
-/// Messages received by the PDA, grouped by day, each with a play button.
+/// Messages received by the PDA, grouped by day under banners, each with a PLAY key.
 class LogPage : public QWidget {
 public:
     explicit LogPage(QWidget* parent = nullptr);
@@ -14,9 +15,10 @@ public:
     static int unreadCount();
 
 private:
-    void togglePlayback(QToolButton* button, const QString& text);
-    void setPlaying(QToolButton* button, bool playing);
+    void togglePlayback(PixelKey* key, LogRow* row, const QString& text);
+    void setPlaying(PixelKey* key, LogRow* row, bool playing);
 
-    QToolButton* m_playing = nullptr;
+    PixelKey* m_playing = nullptr;
+    LogRow* m_playingRow = nullptr;
     QTimer m_playback;
 };
