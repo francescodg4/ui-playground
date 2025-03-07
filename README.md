@@ -32,6 +32,17 @@ is remembered for the next start. `--theme <id>` overrides it.
 - Pages switch instantly; the design has no animation.
 - **Select theme**: the `SELECT` key at the right of the banner.
 
+### Winamp (`winamp`)
+
+- The Winamp Modern skin: brushed-metal frame, custom title bar (drag to move; minimise / maximise /
+  close), and a textual menu that selects the page (Alt + underlined letter).
+- A cobalt LCD shows telemetry: a 7-segment clock, counters, a status badge, a spectrum visualizer and a
+  dot-matrix marquee.
+- Capsule and round transport buttons. The photo viewer is driven like a player: slider, previous /
+  slideshow / pause / stop / next.
+- Pages switch instantly; the marquee and the visualizer move.
+- **Select theme**: the capsule at the right end of the menu row.
+
 ## Build & run
 
 ```bash

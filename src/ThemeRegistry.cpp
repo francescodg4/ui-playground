@@ -9,6 +9,9 @@ ThemeEntry themeEntry();
 namespace emerald {
 ThemeEntry themeEntry();
 }
+namespace winamp {
+ThemeEntry themeEntry();
+}
 
 namespace Themes {
 
@@ -17,6 +20,7 @@ const QList<ThemeEntry>& all()
     static const QList<ThemeEntry> themes = {
         glass::themeEntry(),
         emerald::themeEntry(),
+        winamp::themeEntry(),
     };
     return themes;
 }

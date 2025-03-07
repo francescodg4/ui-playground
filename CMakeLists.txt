@@ -46,6 +46,19 @@ qt_add_executable(pda
   src/themes/glass/widgets/Holo.cpp src/themes/glass/widgets/Holo.hpp
   src/themes/glass/widgets/PageTransition.cpp src/themes/glass/widgets/PageTransition.hpp
   src/themes/glass/widgets/TabBar.cpp src/themes/glass/widgets/TabBar.hpp
+  src/themes/winamp/Entry.cpp
+  src/themes/winamp/PdaWindow.cpp src/themes/winamp/PdaWindow.hpp
+  src/themes/winamp/Theme.cpp src/themes/winamp/Theme.hpp
+  src/themes/winamp/pages/BlueprintsPage.cpp src/themes/winamp/pages/BlueprintsPage.hpp
+  src/themes/winamp/pages/EncyclopediaPage.cpp src/themes/winamp/pages/EncyclopediaPage.hpp
+  src/themes/winamp/pages/InventoryPage.cpp src/themes/winamp/pages/InventoryPage.hpp
+  src/themes/winamp/pages/LogPage.cpp src/themes/winamp/pages/LogPage.hpp
+  src/themes/winamp/pages/PhotoPage.cpp src/themes/winamp/pages/PhotoPage.hpp
+  src/themes/winamp/pages/PingPage.cpp src/themes/winamp/pages/PingPage.hpp
+  src/themes/winamp/widgets/Chrome.cpp src/themes/winamp/widgets/Chrome.hpp
+  src/themes/winamp/widgets/Metal.cpp src/themes/winamp/widgets/Metal.hpp
+  src/themes/winamp/widgets/MetalWidgets.cpp src/themes/winamp/widgets/MetalWidgets.hpp
+  src/themes/winamp/widgets/Telemetry.cpp src/themes/winamp/widgets/Telemetry.hpp
 )
 
 target_include_directories(pda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
