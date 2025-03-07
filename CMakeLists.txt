@@ -20,6 +20,18 @@ qt_add_executable(pda
   src/ThemeController.cpp src/ThemeController.hpp
   src/ThemeDialog.cpp src/ThemeDialog.hpp
   src/ThemeRegistry.cpp src/ThemeRegistry.hpp
+  src/themes/emerald/Entry.cpp
+  src/themes/emerald/PdaWindow.cpp src/themes/emerald/PdaWindow.hpp
+  src/themes/emerald/Theme.cpp src/themes/emerald/Theme.hpp
+  src/themes/emerald/pages/BlueprintsPage.cpp src/themes/emerald/pages/BlueprintsPage.hpp
+  src/themes/emerald/pages/EncyclopediaPage.cpp src/themes/emerald/pages/EncyclopediaPage.hpp
+  src/themes/emerald/pages/InventoryPage.cpp src/themes/emerald/pages/InventoryPage.hpp
+  src/themes/emerald/pages/LogPage.cpp src/themes/emerald/pages/LogPage.hpp
+  src/themes/emerald/pages/PhotoPage.cpp src/themes/emerald/pages/PhotoPage.hpp
+  src/themes/emerald/pages/PingPage.cpp src/themes/emerald/pages/PingPage.hpp
+  src/themes/emerald/widgets/BoxHeader.cpp src/themes/emerald/widgets/BoxHeader.hpp
+  src/themes/emerald/widgets/Pixel.cpp src/themes/emerald/widgets/Pixel.hpp
+  src/themes/emerald/widgets/PixelWidgets.cpp src/themes/emerald/widgets/PixelWidgets.hpp
   src/themes/glass/Entry.cpp
   src/themes/glass/PdaWindow.cpp src/themes/glass/PdaWindow.hpp
   src/themes/glass/Theme.cpp src/themes/glass/Theme.hpp

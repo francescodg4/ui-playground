@@ -20,6 +20,18 @@ is remembered for the next start. `--theme <id>` overrides it.
 - Pages change with a short slide and cross-fade.
 - **Select theme**: the palette button at the right of the tab bar.
 
+### Emerald (`emerald`)
+
+- A GBA-era storage-box system (Pokémon Emerald). Everything is drawn on a pixel grid scaled up 2× with
+  no smoothing. Sprites are outlined and text has two-colour drop shadows.
+- Each page sits on its own tiled box wallpaper under a pill-shaped banner.
+- The top menu is a row of item tiles with a pointing-glove cursor; the arrows beside the banner (or
+  Q / E) step through the pages.
+- Other components: data windows with a CRT screen and scanlines, a teal party deck, lined-paper text
+  boxes and capsule keys that sink into their shadow.
+- Pages switch instantly; the design has no animation.
+- **Select theme**: the `SELECT` key at the right of the banner.
+
 ## Build & run
 
 ```bash

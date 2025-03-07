@@ -6,6 +6,9 @@
 namespace glass {
 ThemeEntry themeEntry();
 }
+namespace emerald {
+ThemeEntry themeEntry();
+}
 
 namespace Themes {
 
@@ -13,6 +16,7 @@ const QList<ThemeEntry>& all()
 {
     static const QList<ThemeEntry> themes = {
         glass::themeEntry(),
+        emerald::themeEntry(),
     };
     return themes;
 }
