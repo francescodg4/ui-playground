@@ -9,11 +9,10 @@ images acquired by the device.
 ```bash
 cmake -S . -B build
 cmake --build build -j
-ctest --test-dir build              # unit tests (Qt Test)
-./build/src/pda                     # opens on the Inventory page
+./build/pda                         # opens on the Inventory page
 ```
 
-Requires Qt ≥ 6.4 (Widgets, and Test for the unit tests). Nothing else is downloaded.
+Requires Qt ≥ 6.4 (Widgets). Nothing else is downloaded.
 
 | Option | |
 |---|---|
@@ -54,5 +53,4 @@ src/
   widgets/TabBar        slanted tabs with notification badges
   widgets/Holo          section title (gold underline) and small shared helpers
   pages/                one class per tab
-tests/tst_pda.cpp       path parser, icons and PhotoLibrary
 ```
