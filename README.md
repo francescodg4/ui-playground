@@ -19,6 +19,7 @@ Requires Qt ≥ 6.4 (Widgets). Nothing else is downloaded.
 | `--photos <dir>` | folder of acquired images (default: [photos/](photos/) in the source tree) |
 | `--page <n>` | page shown at start, 1–6 |
 | `--fullscreen` | run full screen, e.g. on the device display (F11 toggles) |
+| `--reduced-motion` | switch pages without the transition animation |
 | `--screenshot <dir>` | save every page (and the photo viewer) as PNG and quit; works with `-platform offscreen` |
 
 ## Pages
@@ -52,5 +53,6 @@ src/
   PhotoLibrary          the acquired images: folder scan, watch, import, delete
   widgets/TabBar        slanted tabs with notification badges
   widgets/Holo          section title (gold underline) and small shared helpers
+  widgets/PageTransition  slide + cross-fade overlay played when the page changes
   pages/                one class per tab
 ```

@@ -21,8 +21,9 @@ int main(int argc, char* argv[])
     const QCommandLineOption photosOption("photos", "Folder with the acquired images.", "dir", QStringLiteral(PDA_DEFAULT_PHOTO_DIR));
     const QCommandLineOption pageOption("page", "Page shown at start (1-6).", "n", "1");
     const QCommandLineOption fullScreenOption("fullscreen", "Run full screen (F11 toggles).");
+    const QCommandLineOption reducedMotionOption("reduced-motion", "Switch pages without animation.");
     const QCommandLineOption screenshotOption("screenshot", "Save every page as page-N.png in <dir> and quit.", "dir");
-    parser.addOptions({ photosOption, pageOption, fullScreenOption, screenshotOption });
+    parser.addOptions({ photosOption, pageOption, fullScreenOption, reducedMotionOption, screenshotOption });
     parser.process(app);
 
     QApplication::setStyle(QStringLiteral("Fusion"));
@@ -34,6 +35,7 @@ int main(int argc, char* argv[])
     PhotoLibrary photos(parser.value(photosOption));
     PdaWindow window(&photos);
     window.resize(1100, 640);
+    window.setAnimationsEnabled(!parser.isSet(reducedMotionOption) && !parser.isSet(screenshotOption));
     window.setPage(parser.value(pageOption).toInt() - 1);
 
     if (parser.isSet(screenshotOption)) {

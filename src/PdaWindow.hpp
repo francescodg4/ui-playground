@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <QWidget>
 
+class PageTransition;
 class PhotoLibrary;
 class QStackedWidget;
 class TabBar;
@@ -21,11 +22,15 @@ public:
     void setPage(int index);
     int pageIndex(QWidget* page) const;
 
+    /// Page transitions on/off (off for reduced motion and screenshots).
+    void setAnimationsEnabled(bool enabled) { m_animate = enabled; }
+
 protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
     void addPage(Icon icon, const QString& name, QWidget* page);
+    void showPage(int index);
     QRectF screenRect() const;
     void paintScreen(QPainter& p, const QRectF& screen);
 
@@ -35,6 +40,8 @@ private:
 
     TabBar* m_tabs = nullptr;
     QStackedWidget* m_stack = nullptr;
+    PageTransition* m_transition = nullptr;
+    bool m_animate = true;
     QList<Speck> m_specks;
     QTimer m_animation;
     QElapsedTimer m_clock;

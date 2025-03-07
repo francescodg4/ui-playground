@@ -7,6 +7,7 @@
 #include "pages/LogPage.hpp"
 #include "pages/PhotoPage.hpp"
 #include "pages/PingPage.hpp"
+#include "widgets/PageTransition.hpp"
 #include "widgets/TabBar.hpp"
 
 #include <QPainter>
@@ -33,6 +34,11 @@ PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
 
     m_tabs = new TabBar;
     m_stack = new QStackedWidget;
+    QSizePolicy keepSpace = m_stack->sizePolicy();
+    keepSpace.setRetainSizeWhenHidden(true); // hidden while a transition plays in its place
+    m_stack->setSizePolicy(keepSpace);
+    m_transition = new PageTransition(this);
+    connect(m_transition, &PageTransition::finished, m_stack, &QWidget::show);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(int(Margin + 34), int(Margin + 8), int(Margin + 34), int(Margin + 22));
@@ -49,7 +55,7 @@ PdaWindow::PdaWindow(PhotoLibrary* photos, QWidget* parent)
     m_tabs->setBadge(1, 1);
     m_tabs->setBadge(4, LogPage::unreadCount());
 
-    connect(m_tabs, &TabBar::currentChanged, m_stack, &QStackedWidget::setCurrentIndex);
+    connect(m_tabs, &TabBar::currentChanged, this, &PdaWindow::showPage);
 
     // keyboard: 1..6 jump to a page, Q / E step through them
     for (int i = 0; i < m_tabs->count(); ++i) {
@@ -81,6 +87,25 @@ void PdaWindow::addPage(Icon icon, const QString& name, QWidget* page)
 {
     m_tabs->addTab(icon, name);
     m_stack->addWidget(page);
+}
+
+void PdaWindow::showPage(int index)
+{
+    const int from = m_stack->currentIndex();
+    if (index == from) {
+        return;
+    }
+    if (!m_animate || !isVisible() || from < 0) {
+        m_stack->setCurrentIndex(index);
+        return;
+    }
+    m_transition->finish(); // a click during a transition starts the next one from the settled page
+    const QPixmap before = m_stack->currentWidget()->grab();
+    m_stack->setCurrentIndex(index);
+    const QPixmap after = m_stack->currentWidget()->grab();
+    m_transition->setGeometry(m_stack->geometry());
+    m_stack->hide();
+    m_transition->run(before, after, index > from ? 1 : -1);
 }
 
 int PdaWindow::pageCount() const { return m_stack->count(); }
