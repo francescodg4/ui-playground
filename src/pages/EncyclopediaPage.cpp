@@ -17,6 +17,7 @@ namespace {
 
 constexpr int HueRole = Qt::UserRole;
 constexpr int TextRole = Qt::UserRole + 1;
+constexpr int OpenEntryRole = Qt::UserRole + 2; ///< true on the entry shown on the right
 
 struct Node {
     const char* name;
@@ -105,7 +106,7 @@ public:
             ++depth;
         }
         const bool folder = index.model()->hasChildren(index);
-        const bool selected = option.state & QStyle::State_Selected;
+        const bool selected = index.data(OpenEntryRole).toBool();
         const bool hover = option.state & QStyle::State_MouseOver;
 
         p->save();
@@ -271,6 +272,7 @@ EncyclopediaPage::EncyclopediaPage(QWidget* parent)
     m_tree->setIndentation(0);
     m_tree->setUniformRowHeights(true);
     m_tree->setExpandsOnDoubleClick(false);
+    m_tree->setSelectionMode(QAbstractItemView::NoSelection);
     m_tree->setMouseTracking(true);
     m_tree->setFocusPolicy(Qt::NoFocus);
     m_tree->setItemDelegate(new TopicDelegate(m_tree));
@@ -305,15 +307,12 @@ EncyclopediaPage::EncyclopediaPage(QWidget* parent)
     connect(m_tree, &QTreeWidget::itemClicked, this, [this](QTreeWidgetItem* item) {
         if (item->childCount() > 0) {
             item->setExpanded(!item->isExpanded());
-            m_tree->setCurrentItem(m_entry); // keep the open entry highlighted
         } else {
             showEntry(item);
         }
     });
 
-    QTreeWidgetItem* first = addNodes(topics(), m_tree, nullptr);
-    m_tree->setCurrentItem(first);
-    showEntry(first);
+    showEntry(addNodes(topics(), m_tree, nullptr));
 }
 
 void EncyclopediaPage::showEntry(QTreeWidgetItem* item)
@@ -321,7 +320,13 @@ void EncyclopediaPage::showEntry(QTreeWidgetItem* item)
     if (!item) {
         return;
     }
+    // The open entry is marked on the item instead of using the tree selection: re-selecting it
+    // would make QTreeView scroll to it and re-expand any folder above it that was just collapsed.
+    if (m_entry) {
+        m_entry->setData(0, OpenEntryRole, false);
+    }
     m_entry = item;
+    m_entry->setData(0, OpenEntryRole, true);
     m_scan->setHue(item->data(0, HueRole).toInt());
     m_title->setText(item->text(0));
     const QString text = item->data(0, TextRole).toString();
