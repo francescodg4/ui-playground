@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
     const QCommandLineOption themeOption("theme", QStringLiteral("Theme to use: %1 (default: the last one selected).").arg(ids.join(QStringLiteral(", "))), "id");
     const QCommandLineOption pageOption("page", "Page shown at start (1-6).", "n", "1");
     const QCommandLineOption fullScreenOption("fullscreen", "Run full screen (F11 toggles).");
-    const QCommandLineOption reducedMotionOption("reduced-motion", "No animations (transitions, moving canvas, marquee, pulsing).");
+    const QCommandLineOption reducedMotionOption("reduced-motion", "No animations (transitions, moving canvas, visualizer, pulsing).");
     const QCommandLineOption reducedTransparencyOption("reduced-transparency", "Solid surfaces instead of glass (Liquid Glass theme).");
     const QCommandLineOption screenshotOption("screenshot", "Save every page as page-N.png in <dir> and quit; with --theme all, one folder per theme.", "dir");
     parser.addOptions({ photosOption, themeOption, pageOption, fullScreenOption, reducedMotionOption, reducedTransparencyOption, screenshotOption });

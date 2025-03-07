@@ -41,8 +41,8 @@ void roundButton(QPainter& p, const QRectF& rect, bool pressed, bool active, boo
 void sevenSegment(QPainter& p, const QRectF& rect, const QString& text, const QColor& on, const QColor& off);
 /// LCD text with a soft glow.
 void glowText(QPainter& p, const QRectF& rect, int flags, const QString& text, const QColor& color);
-/// Dot-matrix LED line; @p offset scrolls it (in dots) for the marquee.
-void dotMatrix(QPainter& p, const QRectF& rect, const QString& text, qreal offset, const QColor& on, const QColor& off);
+/// Static dot-matrix LED line (a line too long for it ends with an ellipsis).
+void dotMatrix(QPainter& p, const QRectF& rect, const QString& text, const QColor& on, const QColor& off);
 /// Round indicator LED.
 void led(QPainter& p, const QPointF& centre, qreal radius, const QColor& color, bool lit);
 /// Slider groove with its filled part, and the metallic capsule thumb.

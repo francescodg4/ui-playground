@@ -37,10 +37,10 @@ is remembered for the next start. `--theme <id>` overrides it.
 - The Winamp Modern skin: brushed-metal frame, custom title bar (drag to move; minimise / maximise /
   close), and a textual menu that selects the page (Alt + underlined letter).
 - A cobalt LCD shows telemetry: a 7-segment clock, counters, a status badge, a spectrum visualizer and a
-  dot-matrix marquee.
+  dot-matrix status line (static: a line too long for it ends with an ellipsis).
 - Capsule and round transport buttons. The photo viewer is driven like a player: slider, previous /
   slideshow / pause / stop / next.
-- Pages switch instantly; the marquee and the visualizer move.
+- Pages switch instantly; only the visualizer moves.
 - **Select theme**: the capsule at the right end of the menu row.
 
 ## Build & run
@@ -60,7 +60,7 @@ Requires Qt ≥ 6.4 (Widgets). Nothing else is downloaded.
 | `--photos <dir>` | folder of acquired images (default: [photos/](photos/) in the source tree) |
 | `--page <n>` | page shown at start, 1–6 |
 | `--fullscreen` | run full screen, e.g. on the device display (F11 toggles) |
-| `--reduced-motion` | no animations (transitions, moving canvas, marquee, pulsing) |
+| `--reduced-motion` | no animations (transitions, moving canvas, visualizer, pulsing) |
 | `--reduced-transparency` | solid surfaces instead of glass (Liquid Glass) |
 | `--screenshot <dir>` | save every page (and the photo viewer) as PNG and quit; `--theme all` writes one folder per theme; works with `-platform offscreen` |
 

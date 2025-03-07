@@ -298,7 +298,7 @@ void glowText(QPainter& p, const QRectF& rect, int flags, const QString& text, c
     p.restore();
 }
 
-void dotMatrix(QPainter& p, const QRectF& rect, const QString& text, qreal offset, const QColor& on, const QColor& off)
+void dotMatrix(QPainter& p, const QRectF& rect, const QString& text, const QColor& on, const QColor& off)
 {
     constexpr int Rows = 11;
     const qreal dot = rect.height() / Rows;
@@ -306,28 +306,25 @@ void dotMatrix(QPainter& p, const QRectF& rect, const QString& text, qreal offse
     font.setPixelSize(10);
     font.setBold(true);
     font.setStyleStrategy(QFont::NoAntialias);
-    const QString line = text + QStringLiteral("   ***   ");
-    const int textWidth = QFontMetrics(font).horizontalAdvance(line);
     const int columns = int(rect.width() / dot);
 
-    // text rasterised at one pixel per dot, repeated for a seamless scroll
-    QImage bitmap(textWidth * 2 + columns, Rows, QImage::Format_Grayscale8);
+    // text rasterised at one pixel per dot; too long a line is cut with an ellipsis, never scrolled
+    QImage bitmap(columns, Rows, QImage::Format_Grayscale8);
     bitmap.fill(0);
     {
         QPainter b(&bitmap);
         b.setFont(font);
         b.setPen(Qt::white);
-        b.drawText(QRect(0, 0, textWidth, Rows), Qt::AlignVCenter | Qt::AlignLeft, line);
-        b.drawText(QRect(textWidth, 0, textWidth, Rows), Qt::AlignVCenter | Qt::AlignLeft, line);
+        const QString shown = QFontMetrics(font).elidedText(text, Qt::ElideRight, columns);
+        b.drawText(QRect(0, 0, columns, Rows), Qt::AlignVCenter | Qt::AlignLeft, shown);
     }
-    const int start = textWidth > 0 ? int(offset) % textWidth : 0;
     p.save();
     p.setRenderHint(QPainter::Antialiasing);
     p.setPen(Qt::NoPen);
     for (int row = 0; row < Rows; ++row) {
         const uchar* bits = bitmap.constScanLine(row);
         for (int col = 0; col < columns; ++col) {
-            const bool lit = bits[start + col] > 127;
+            const bool lit = bits[col] > 127;
             p.setBrush(lit ? on.lighter(125) : off.darker(135));
             p.drawEllipse(QPointF(rect.left() + (col + 0.5) * dot, rect.top() + (row + 0.5) * dot), dot * (lit ? 0.46 : 0.34), dot * (lit ? 0.46 : 0.34));
         }

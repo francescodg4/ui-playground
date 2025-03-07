@@ -25,7 +25,7 @@ public:
     void showPhotoViewer() override;
     int pageIndex(QWidget* page) const;
 
-    /// Marquee scrolling and visualizer motion (off for reduced motion and screenshots).
+    /// Visualizer motion (off for reduced motion and screenshots).
     void setAnimationsEnabled(bool enabled) override;
 
 protected:

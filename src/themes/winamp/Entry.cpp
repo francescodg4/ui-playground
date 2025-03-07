@@ -12,7 +12,7 @@ ThemeEntry themeEntry()
     return {
         QStringLiteral("winamp"),
         QCoreApplication::translate("Themes", "Winamp"),
-        QCoreApplication::translate("Themes", "Winamp Modern skin: brushed metal, cobalt LCD telemetry with marquee and visualizer, transport controls."),
+        QCoreApplication::translate("Themes", "Winamp Modern skin: brushed metal, cobalt LCD telemetry with a dot-matrix status line and visualizer, transport controls."),
         &Theme::styleSheet,
         [] { return Metal::uiFont(9); },
         [](PhotoLibrary* photos, const ThemeOptions&) -> PdaShell* { return new PdaWindow(photos); },

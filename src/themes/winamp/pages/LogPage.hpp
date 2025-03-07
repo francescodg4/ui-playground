@@ -9,7 +9,7 @@ class LogRow;
 class RoundButton;
 
 /// Messages received by the PDA as a playlist on the LCD; playing one drives the telemetry
-/// (elapsed clock, marquee, visualizer).
+/// (elapsed clock, status line, visualizer).
 class LogPage : public QWidget {
 public:
     explicit LogPage(QWidget* parent = nullptr);

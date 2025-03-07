@@ -42,7 +42,6 @@ void Telemetry::report(const QString& message)
 {
     if (s_instance) {
         s_instance->m_message = message;
-        s_instance->m_scroll = 0;
         s_instance->update();
     }
 }
@@ -62,7 +61,6 @@ void Telemetry::setPage(const QString& name, const QString& status)
 {
     m_page = name;
     m_message = status;
-    m_scroll = 0;
     update();
 }
 
@@ -86,12 +84,12 @@ void Telemetry::setAnimated(bool animated)
 
 void Telemetry::tick()
 {
-    m_scroll += 0.5;
+    m_phase += 0.5;
     auto* rng = QRandomGenerator::global();
     for (int i = 0; i < Bands; ++i) {
         const qreal shape = 1.0 - std::abs(i - Bands * 0.35) / Bands; // more energy in the low-mid bands
         const qreal target = m_playing ? (0.35 + 0.65 * rng->generateDouble()) * shape
-                                       : 0.08 + 0.18 * shape * (0.5 + 0.5 * std::sin(m_scroll * 0.15 + i * 0.6));
+                                       : 0.08 + 0.18 * shape * (0.5 + 0.5 * std::sin(m_phase * 0.15 + i * 0.6));
         m_bands[i] += (target - m_bands[i]) * 0.45;
         m_peaks[i] = std::max(m_peaks[i] - 0.02, m_bands[i]);
     }
@@ -151,9 +149,9 @@ void Telemetry::paintEvent(QPaintEvent*)
         p.fillRect(QRectF(bx, py, barW, 1.5), QColor(0xc8, 0xe0, 0xff));
     }
 
-    // dot-matrix marquee
+    // dot-matrix status line
     const QString line = QStringLiteral("PDA :: %1  -  %2").arg(m_page.toUpper(), m_message.toUpper());
-    Metal::dotMatrix(p, QRectF(12, 52, width() - 24, 30), line, m_scroll, Theme::lcdGlow, Theme::lcdDim);
+    Metal::dotMatrix(p, QRectF(12, 52, width() - 24, 30), line, Theme::lcdGlow, Theme::lcdDim);
 }
 
 } // namespace winamp
