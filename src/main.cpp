@@ -2,10 +2,12 @@
 #include "PhotoLibrary.hpp"
 #include "ThemeController.hpp"
 #include "ThemeRegistry.hpp"
+#include "WidgetGallery.hpp"
 
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QTimer>
 
 namespace {
@@ -50,8 +52,9 @@ int main(int argc, char* argv[])
     const QCommandLineOption fullScreenOption("fullscreen", "Run full screen (F11 toggles).");
     const QCommandLineOption reducedMotionOption("reduced-motion", "No animations (transitions, moving canvas, visualizer, pulsing).");
     const QCommandLineOption reducedTransparencyOption("reduced-transparency", "Solid surfaces instead of glass (Liquid Glass theme).");
-    const QCommandLineOption screenshotOption("screenshot", "Save every page as page-N.png in <dir> and quit; with --theme all, one folder per theme.", "dir");
-    parser.addOptions({ photosOption, themeOption, pageOption, fullScreenOption, reducedMotionOption, reducedTransparencyOption, screenshotOption });
+    const QCommandLineOption galleryOption("gallery", "Open the widget gallery: the standard widgets in each interface, to choose one.");
+    const QCommandLineOption screenshotOption("screenshot", "Save every page as page-N.png in <dir> and quit; with --theme all, one folder per theme. With --gallery, saves gallery-<theme>.png.", "dir");
+    parser.addOptions({ photosOption, themeOption, pageOption, fullScreenOption, reducedMotionOption, reducedTransparencyOption, galleryOption, screenshotOption });
     parser.process(app);
 
     QApplication::setStyle(QStringLiteral("Fusion"));
@@ -67,6 +70,28 @@ int main(int argc, char* argv[])
     options.reducedMotion = parser.isSet(reducedMotionOption);
     options.reducedTransparency = parser.isSet(reducedTransparencyOption);
     ThemeController controller(&photos, options);
+
+    if (parser.isSet(galleryOption)) {
+        const QStringList themes = requested == QLatin1String("all") ? ids : QStringList { requested.isEmpty() ? Themes::saved() : requested };
+        controller.showGallery(themes.first());
+        if (parser.isSet(screenshotOption)) {
+            QTimer::singleShot(300, &controller, [&] {
+                const QDir dir(parser.value(screenshotOption));
+                dir.mkpath(QStringLiteral("."));
+                for (const QString& id : themes) {
+                    controller.gallery()->setTheme(id);
+                    QElapsedTimer settle; // let the restyled window run a few event loop turns, as it would live
+                    settle.start();
+                    while (settle.elapsed() < 200) {
+                        QApplication::processEvents(QEventLoop::AllEvents, 20);
+                    }
+                    controller.gallery()->grab().save(dir.filePath(QStringLiteral("gallery-%1.png").arg(id)));
+                }
+                QApplication::quit();
+            });
+        }
+        return app.exec();
+    }
 
     if (parser.isSet(screenshotOption)) {
         controller.setAnimationsEnabled(false);

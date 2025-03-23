@@ -1,5 +1,6 @@
 #include "ThemeRegistry.hpp"
 #include "themes/emerald/PdaWindow.hpp"
+#include "themes/emerald/Style.hpp"
 #include "themes/emerald/Theme.hpp"
 
 #include <QCoreApplication>
@@ -15,6 +16,7 @@ ThemeEntry themeEntry()
         &Theme::styleSheet,
         [] { return QFont(QStringLiteral("DejaVu Sans Mono"), 9); },
         [](PhotoLibrary* photos, const ThemeOptions&) -> PdaShell* { return new PdaWindow(photos); },
+        []() -> WidgetStyle* { return new Style; },
     };
 }
 

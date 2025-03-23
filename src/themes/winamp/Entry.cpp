@@ -1,5 +1,6 @@
 #include "ThemeRegistry.hpp"
 #include "themes/winamp/PdaWindow.hpp"
+#include "themes/winamp/Style.hpp"
 #include "themes/winamp/Theme.hpp"
 #include "themes/winamp/widgets/Metal.hpp"
 
@@ -16,6 +17,7 @@ ThemeEntry themeEntry()
         &Theme::styleSheet,
         [] { return Metal::uiFont(9); },
         [](PhotoLibrary* photos, const ThemeOptions&) -> PdaShell* { return new PdaWindow(photos); },
+        []() -> WidgetStyle* { return new Style; },
     };
 }
 

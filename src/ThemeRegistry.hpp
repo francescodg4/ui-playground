@@ -6,6 +6,7 @@
 
 class PdaShell;
 class PhotoLibrary;
+class WidgetStyle;
 
 /// Accessibility switches passed to every theme.
 struct ThemeOptions {
@@ -21,6 +22,7 @@ struct ThemeEntry {
     QString (*styleSheet)();
     QFont (*font)();
     PdaShell* (*create)(PhotoLibrary* photos, const ThemeOptions& options);
+    WidgetStyle* (*widgetStyle)(); ///< the standard widgets in this design (widget gallery)
 };
 
 namespace Themes {

@@ -195,10 +195,14 @@ ThemeDialog::ThemeDialog(const QString& current, QWidget* parent)
         }
     }
 
+    auto* gallery = new QPushButton(tr("Widget gallery..."));
+    gallery->setToolTip(tr("Compare the themes on the standard widgets (Ctrl+G)"));
+    connect(gallery, &QPushButton::clicked, this, [this] { done(OpenGallery); });
     auto* cancel = new QPushButton(tr("Cancel"));
     connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
     auto* buttons = new QHBoxLayout;
     buttons->addWidget(hint, 1);
+    buttons->addWidget(gallery);
     buttons->addWidget(cancel);
 
     auto* layout = new QVBoxLayout(this);

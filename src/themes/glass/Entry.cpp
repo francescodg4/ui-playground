@@ -1,5 +1,6 @@
 #include "ThemeRegistry.hpp"
 #include "themes/glass/PdaWindow.hpp"
+#include "themes/glass/Style.hpp"
 #include "themes/glass/Theme.hpp"
 #include "themes/glass/widgets/Glass.hpp"
 
@@ -25,6 +26,7 @@ ThemeEntry themeEntry()
             Glass::settings().reducedTransparency = options.reducedTransparency;
             return new PdaWindow(photos);
         },
+        []() -> WidgetStyle* { return new Style; },
     };
 }
 

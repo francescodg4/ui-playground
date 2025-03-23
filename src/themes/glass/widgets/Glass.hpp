@@ -2,6 +2,7 @@
 
 #include <QColor>
 #include <QImage>
+#include <QPointer>
 #include <QWidget>
 
 class QPainter;
@@ -41,7 +42,7 @@ public:
     void setHost(QWidget* host) { m_host = host; }
     QWidget* host() const { return m_host; }
     /// The host if @p widget is inside it, else null (a widget of another window must not sample it).
-    QWidget* hostFor(const QWidget* widget) const { return m_host && widget && widget->window() == m_host ? m_host : nullptr; }
+    QWidget* hostFor(const QWidget* widget) const { return m_host && widget && widget->window() == m_host ? m_host.data() : nullptr; }
 
     /// Re-renders the canvas for the host size at the current time.
     void render();
@@ -51,7 +52,7 @@ public:
     qreal luminance(const QRectF& hostRect) const; ///< 0..1, of the blurred backdrop
 
 private:
-    QWidget* m_host = nullptr;
+    QPointer<QWidget> m_host;
     QImage m_canvas;
     QImage m_levels[3];
 };

@@ -43,6 +43,27 @@ is remembered for the next start. `--theme <id>` overrides it.
 - Pages switch instantly; only the visualizer moves.
 - **Select theme**: the capsule at the right end of the menu row.
 
+## Widget gallery
+
+`--gallery` (or Ctrl+G in the PDA, or **Widget gallery...** in the theme dialog) opens a window with the
+most used standard widgets, so the interface can be chosen on them:
+
+- **Buttons**: push (default, toggle, flat, disabled), tool button with a menu, radio buttons, check boxes
+  (including tri-state)
+- **Input**: line edits (placeholder, password), spin box, date-time edit, combo boxes (plain and editable)
+- **Ranges**: slider with ticks, progress bar, scroll bar, a vertical-slider equalizer
+- **Views**: a tab widget with a table, a tree, an icon list and rich text
+- **Telemetry**: LCD numbers and a dial
+- the menu bar, menus, combo box popups, tooltips and the status bar
+
+**Design** (or the Interface menu, Ctrl+1 / 2 / 3) restyles everything at once and remembers the choice;
+**Disable widgets** shows the disabled states; **Open PDA** continues in the PDA with that interface.
+
+Each theme draws these widgets through its own `QStyle` (`themes/<id>/Style`), following its design
+rules: frosted cards, clay controls and glows for Liquid Glass; pixel-grid keys,
+lined-paper fields, an HP-bar progress and box banners for Emerald; metal capsules, LCD-glass fields and
+views, LED indicators and VU-segment progress for Winamp.
+
 ## Build & run
 
 ```bash
@@ -50,6 +71,7 @@ cmake -S . -B build
 cmake --build build -j
 ./build/pda                         # opens with the last theme selected
 ./build/pda --theme emerald         # or pick one
+./build/pda --gallery               # the widget gallery
 ```
 
 Requires Qt ≥ 6.4 (Widgets). Nothing else is downloaded.
@@ -62,7 +84,8 @@ Requires Qt ≥ 6.4 (Widgets). Nothing else is downloaded.
 | `--fullscreen` | run full screen, e.g. on the device display (F11 toggles) |
 | `--reduced-motion` | no animations (transitions, moving canvas, visualizer, pulsing) |
 | `--reduced-transparency` | solid surfaces instead of glass (Liquid Glass) |
-| `--screenshot <dir>` | save every page (and the photo viewer) as PNG and quit; `--theme all` writes one folder per theme; works with `-platform offscreen` |
+| `--gallery` | open the widget gallery instead of the PDA |
+| `--screenshot <dir>` | save every page (and the photo viewer) as PNG and quit; `--theme all` writes one folder per theme; with `--gallery`, saves `gallery-<theme>.png`; works with `-platform offscreen` |
 
 ## Pages
 
@@ -75,7 +98,8 @@ Requires Qt ≥ 6.4 (Widgets). Nothing else is downloaded.
 | **Log** | messages grouped by day, each with a play button |
 | **Encyclopedia** | collapsible topic tree; the open entry shows its bio scan and text |
 
-Keys: `1`–`6` jump to a page, `Q` / `E` go to the previous / next one, Ctrl+T selects the theme.
+Keys: `1`–`6` jump to a page, `Q` / `E` go to the previous / next one, Ctrl+T selects the theme,
+Ctrl+G opens the widget gallery.
 
 ## Photo gallery
 
@@ -93,9 +117,13 @@ src/
   ThemeRegistry         the list of themes and the remembered choice
   ThemeController       builds the window of a theme and swaps it when another one is selected
   ThemeDialog           the "Select theme" dialog
+  WidgetStyle           base QStyle of the themes for the standard widgets: the plumbing, and a
+                        small drawing vocabulary (button, field, slider, tab, dial...) each theme fills in
+  WidgetGallery         the standard widgets, with the interface selector
   themes/<id>/          one folder (and C++ namespace) per theme:
-    Entry.cpp           registers the theme (name, style sheet, font, window factory)
+    Entry.cpp           registers the theme (name, style sheet, font, window factory, widget style)
     PdaWindow, Theme    the theme's main window and design tokens
+    Style               the theme's WidgetStyle
     pages/, widgets/    the six pages and the theme's own widgets
 ```
 

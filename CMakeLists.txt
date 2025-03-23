@@ -20,8 +20,11 @@ qt_add_executable(pda
   src/ThemeController.cpp src/ThemeController.hpp
   src/ThemeDialog.cpp src/ThemeDialog.hpp
   src/ThemeRegistry.cpp src/ThemeRegistry.hpp
+  src/WidgetGallery.cpp src/WidgetGallery.hpp
+  src/WidgetStyle.cpp src/WidgetStyle.hpp
   src/themes/emerald/Entry.cpp
   src/themes/emerald/PdaWindow.cpp src/themes/emerald/PdaWindow.hpp
+  src/themes/emerald/Style.cpp src/themes/emerald/Style.hpp
   src/themes/emerald/Theme.cpp src/themes/emerald/Theme.hpp
   src/themes/emerald/pages/BlueprintsPage.cpp src/themes/emerald/pages/BlueprintsPage.hpp
   src/themes/emerald/pages/EncyclopediaPage.cpp src/themes/emerald/pages/EncyclopediaPage.hpp
@@ -34,6 +37,7 @@ qt_add_executable(pda
   src/themes/emerald/widgets/PixelWidgets.cpp src/themes/emerald/widgets/PixelWidgets.hpp
   src/themes/glass/Entry.cpp
   src/themes/glass/PdaWindow.cpp src/themes/glass/PdaWindow.hpp
+  src/themes/glass/Style.cpp src/themes/glass/Style.hpp
   src/themes/glass/Theme.cpp src/themes/glass/Theme.hpp
   src/themes/glass/pages/BlueprintsPage.cpp src/themes/glass/pages/BlueprintsPage.hpp
   src/themes/glass/pages/EncyclopediaPage.cpp src/themes/glass/pages/EncyclopediaPage.hpp
@@ -48,6 +52,7 @@ qt_add_executable(pda
   src/themes/glass/widgets/TabBar.cpp src/themes/glass/widgets/TabBar.hpp
   src/themes/winamp/Entry.cpp
   src/themes/winamp/PdaWindow.cpp src/themes/winamp/PdaWindow.hpp
+  src/themes/winamp/Style.cpp src/themes/winamp/Style.hpp
   src/themes/winamp/Theme.cpp src/themes/winamp/Theme.hpp
   src/themes/winamp/pages/BlueprintsPage.cpp src/themes/winamp/pages/BlueprintsPage.hpp
   src/themes/winamp/pages/EncyclopediaPage.cpp src/themes/winamp/pages/EncyclopediaPage.hpp
