@@ -8,7 +8,7 @@
 
 class QPainter;
 
-/// Vector icons of the PDA, drawn with QPainter (no image assets needed).
+/// Vector icons drawn with QPainter (no image assets needed).
 enum class Icon {
     // tab bar
     Person,

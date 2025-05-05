@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QColor>
-#include <QString>
 
 namespace winamp {
 
@@ -27,9 +26,6 @@ inline const QColor accent { 0x2f, 0x6f, 0xd8 }; ///< blue active state (Play)
 inline const QColor text { 0x1c, 0x24, 0x33 }; ///< UI text on metal
 inline const QColor textDim { 0x5a, 0x64, 0x78 };
 inline const QColor outline { 0x6a, 0x74, 0x86 };
-
-/// Global Qt style sheet (scroll bars, labels, dialogs).
-QString styleSheet();
 
 } // namespace Theme
 

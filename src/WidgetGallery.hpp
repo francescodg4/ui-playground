@@ -15,7 +15,7 @@ class QTreeWidget;
 
 /// The most used standard widgets (buttons, inputs, ranges, item views, displays, menus) in one
 /// window, drawn by the WidgetStyle of the selected interface. Choosing an interface restyles the
-/// whole application at once; "Open PDA" continues in that interface.
+/// whole application at once.
 class WidgetGallery : public QMainWindow {
     Q_OBJECT
 public:
@@ -24,10 +24,6 @@ public:
     QString theme() const { return m_theme; }
     /// Draws the application's standard widgets with the design of theme @p id.
     void setTheme(const QString& id);
-
-signals:
-    /// The user asked for the PDA in interface @p id.
-    void openPdaRequested(const QString& id);
 
 protected:
     void paintEvent(QPaintEvent* event) override;

@@ -51,10 +51,6 @@ WidgetGallery::WidgetGallery(QWidget* parent)
 
     // ---- menus
     QMenu* file = menuBar()->addMenu(tr("&File"));
-    QAction* open = file->addAction(tr("&Open PDA"));
-    open->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Return));
-    connect(open, &QAction::triggered, this, [this] { emit openPdaRequested(m_theme); });
-    file->addSeparator();
     QAction* quit = file->addAction(tr("&Quit"));
     quit->setShortcut(QKeySequence::Quit);
     connect(quit, &QAction::triggered, qApp, &QApplication::closeAllWindows);
@@ -78,7 +74,7 @@ WidgetGallery::WidgetGallery(QWidget* parent)
     QMenu* help = menuBar()->addMenu(tr("&Help"));
     connect(help->addAction(tr("&About")), &QAction::triggered, this, [this] {
         QMessageBox::about(this, tr("Widget gallery"),
-            tr("The standard Qt widgets drawn by each interface of the PDA. "
+            tr("The standard Qt widgets drawn by each interface. "
                "Pick an interface to restyle everything at once."));
     });
 
@@ -190,10 +186,6 @@ QGroupBox* WidgetGallery::interfaceBox()
     m_description = new QLabel;
     m_description->setWordWrap(true);
     m_disable = new QCheckBox(tr("Disable widgets"));
-    auto* open = new QPushButton(tr("Open PDA"));
-    open->setDefault(true);
-    open->setToolTip(tr("Continue in the PDA with this interface (Ctrl+Enter)"));
-    connect(open, &QPushButton::clicked, this, [this] { emit openPdaRequested(m_theme); });
 
     auto* layout = new QHBoxLayout(box);
     layout->addWidget(new QLabel(tr("Design")));
@@ -202,7 +194,6 @@ QGroupBox* WidgetGallery::interfaceBox()
     layout->addWidget(m_description, 1);
     layout->addSpacing(8);
     layout->addWidget(m_disable);
-    layout->addWidget(open);
     return box;
 }
 

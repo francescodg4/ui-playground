@@ -2,15 +2,13 @@
 
 #include <QColor>
 #include <QFont>
-#include <QString>
 
 namespace glass {
 
-/// Design tokens and the application style sheet.
+/// Design tokens.
 namespace Theme {
 
 // ambient canvas
-inline const QColor outside { 0x02, 0x0b, 0x16 }; ///< around the PDA screen
 inline const QColor canvas { 0x06, 0x18, 0x2c };
 inline const QColor ambient[] = {
     // brand colours drifting under the glass
@@ -51,9 +49,6 @@ inline constexpr qreal radiusCard = 20;
 inline constexpr qreal radiusControl = 16;
 inline constexpr int gap = 16;
 inline constexpr qreal pressedScale = 0.98;
-
-/// Global Qt style sheet (scroll bars, labels, item views, dialogs).
-QString styleSheet();
 
 /// Uppercase, letter-spaced font used by section titles.
 QFont titleFont();

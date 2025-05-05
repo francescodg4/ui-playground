@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QColor>
-#include <QString>
 
 namespace emerald {
 
@@ -34,9 +33,6 @@ inline const QColor crtDark { 0x38, 0x68, 0x88 };
 inline const QColor keyYellow { 0xf0, 0xd8, 0x60 };
 inline const QColor keyGray { 0xc0, 0xc0, 0xc8 };
 inline const QColor badge { 0xe0, 0x50, 0x40 };
-
-/// Global Qt style sheet (pixel scroll bars, dialogs).
-QString styleSheet();
 
 } // namespace Theme
 
