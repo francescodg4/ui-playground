@@ -13,7 +13,7 @@ them in several interface designs. Pick a design and the whole window restyles a
 - **Telemetry**: LCD numbers and a dial
 - the menu bar, menus, combo box popups, tooltips and the status bar
 
-**Design** (or the Interface menu, Ctrl+1 / 2 / 3) selects the interface and remembers the choice;
+**Design** (or the Interface menu, Ctrl+1 … 4) selects the interface and remembers the choice;
 **Disable widgets** shows the disabled states.
 
 ## Designs
@@ -35,6 +35,12 @@ lined-paper fields, an HP-bar progress, a CRT display and highlighted tiles for 
 
 The Winamp Modern skin: brushed metal, capsule buttons, fields and views behind cobalt LCD glass with
 glowing text, LED indicators, VU-meter progress, EQ-style slider thumbs and the skin's slanted tabs.
+
+### Metro (`metro`)
+
+The Windows 8 Modern UI: flat and square on a deep `#1d1d1d` canvas, no shadows. Content is chrome, so a
+group is only its large light title; buttons are 2px outlines that invert when pressed; fields, lists and
+menus are white surfaces; LCD displays are accent live tiles and tabs are text headers with an accent bar.
 
 ## Build & run
 

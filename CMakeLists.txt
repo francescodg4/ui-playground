@@ -26,6 +26,9 @@ qt_add_executable(gallery
   src/themes/glass/Style.cpp src/themes/glass/Style.hpp
   src/themes/glass/Theme.cpp src/themes/glass/Theme.hpp
   src/themes/glass/widgets/Glass.cpp src/themes/glass/widgets/Glass.hpp
+  src/themes/metro/Entry.cpp
+  src/themes/metro/Style.cpp src/themes/metro/Style.hpp
+  src/themes/metro/Theme.cpp src/themes/metro/Theme.hpp
   src/themes/winamp/Entry.cpp
   src/themes/winamp/Style.cpp src/themes/winamp/Style.hpp
   src/themes/winamp/Theme.hpp

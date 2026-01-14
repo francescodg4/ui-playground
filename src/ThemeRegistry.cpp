@@ -12,6 +12,9 @@ ThemeEntry themeEntry();
 namespace winamp {
 ThemeEntry themeEntry();
 }
+namespace metro {
+ThemeEntry themeEntry();
+}
 
 namespace Themes {
 
@@ -21,6 +24,7 @@ const QList<ThemeEntry>& all()
         glass::themeEntry(),
         emerald::themeEntry(),
         winamp::themeEntry(),
+        metro::themeEntry(),
     };
     return themes;
 }

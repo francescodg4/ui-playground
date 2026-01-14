@@ -147,8 +147,33 @@ void WidgetStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* op
     case PE_IndicatorArrowRight:
         arrow(*p, centred(option->rect, std::min(m.arrow, std::min(option->rect.width(), option->rect.height()))), Qt::RightArrow, look);
         return;
+    case PE_IndicatorBranch:
+        // the expand arrow of a tree row, in the view's text colour
+        if (option->state & State_Children) {
+            const QRectF r = centred(option->rect, 8);
+            const auto at = [&](qreal x, qreal y) { return QPointF(r.left() + x * r.width(), r.top() + y * r.height()); };
+            QColor ink = option->palette.color(look.enabled ? QPalette::Active : QPalette::Disabled, QPalette::Text);
+            ink.setAlphaF(0.7f);
+            p->save();
+            p->setRenderHint(QPainter::Antialiasing);
+            p->setPen(QPen(ink, 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+            if (option->state & State_Open) {
+                p->drawPolyline(QPolygonF({ at(0, 0.3), at(0.5, 0.75), at(1, 0.3) }));
+            } else {
+                p->drawPolyline(QPolygonF({ at(0.3, 0), at(0.75, 0.5), at(0.3, 1) }));
+            }
+            p->restore();
+        }
+        return;
     case PE_FrameTabWidget:
         tabPane(*p, widget, option->rect);
+        return;
+    case PE_PanelItemViewRow:
+        // the row behind a tree's indentation: only alternate rows are shaded, the selection
+        // shape of the cells alone marks the selected row
+        if (const auto* row = qstyleoption_cast<const QStyleOptionViewItem*>(option); row && (row->features & QStyleOptionViewItem::Alternate)) {
+            p->fillRect(option->rect, option->palette.brush(QPalette::AlternateBase));
+        }
         return;
     case PE_PanelItemViewItem: {
         const auto* item = qstyleoption_cast<const QStyleOptionViewItem*>(option);
