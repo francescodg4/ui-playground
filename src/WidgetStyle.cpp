@@ -81,6 +81,11 @@ void WidgetStyle::spinButton(QPainter& p, const QRect& rect, Qt::ArrowType type,
     arrow(p, centred(rect, m.arrow), type, look);
 }
 
+QColor WidgetStyle::tabText(bool, const Look& look, const QPalette& palette) const
+{
+    return palette.color(look.enabled ? QPalette::Active : QPalette::Disabled, QPalette::WindowText);
+}
+
 QColor WidgetStyle::menuBarText(bool) const
 {
     return standardPalette().color(QPalette::WindowText);
@@ -278,6 +283,14 @@ void WidgetStyle::drawControl(ControlElement element, const QStyleOption* option
     case CE_TabBarTabShape:
         tab(*p, option->rect, option->state & State_Selected, look);
         return;
+    case CE_TabBarTabLabel:
+        if (const auto* t = qstyleoption_cast<const QStyleOptionTab*>(option)) {
+            QStyleOptionTab label(*t);
+            label.palette.setColor(QPalette::WindowText, tabText(option->state & State_Selected, look, t->palette));
+            QProxyStyle::drawControl(element, &label, p, widget);
+            return;
+        }
+        break;
     case CE_HeaderSection:
         header(*p, option->rect, look);
         return;

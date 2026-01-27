@@ -18,6 +18,9 @@ ThemeEntry themeEntry();
 namespace revolut {
 ThemeEntry themeEntry();
 }
+namespace flat {
+ThemeEntry themeEntry();
+}
 
 namespace Themes {
 
@@ -29,6 +32,7 @@ const QList<ThemeEntry>& all()
         winamp::themeEntry(),
         metro::themeEntry(),
         revolut::themeEntry(),
+        flat::themeEntry(),
     };
     return themes;
 }

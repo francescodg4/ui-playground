@@ -13,7 +13,7 @@ them in several interface designs. Pick a design and the whole window restyles a
 - **Telemetry**: LCD numbers and a dial
 - the menu bar, menus, combo box popups, tooltips and the status bar
 
-**Design** (or the Interface menu, Ctrl+1 … 5) selects the interface and remembers the choice;
+**Design** (or the Interface menu, Ctrl+1 … 6) selects the interface and remembers the choice;
 **Disable widgets** shows the disabled states.
 
 ## Designs
@@ -47,6 +47,12 @@ menus are white surfaces; LCD displays are accent live tiles and tabs are text h
 The Revolut.com interface model in the Idetica identity: a light canvas with large rounded cards that each
 own one accent (violet, indigo, amber, magenta) under an uppercase eyebrow, violet and chip pill buttons,
 white widget surfaces with an amber focus ring, pill tabs, and LCD displays on the dark violet-glow stage.
+
+### Flat (`flat`)
+
+A dark operations console (video-analytics / monitoring dashboard): navy panels with 1px hairlines on a
+black canvas, no gradients or shadows; muted labels and light values; sunken fields and views; docked text
+tabs with a steel-blue indicator; detection green only for check marks, progress and the primary action.
 
 ## Build & run
 

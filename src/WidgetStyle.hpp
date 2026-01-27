@@ -74,6 +74,7 @@ public:
     virtual void scrollBar(QPainter& p, const QRect& groove, const QRect& handle, Qt::Orientation orientation, const Look& look) const = 0;
     virtual void progress(QPainter& p, const QRect& rect, const QRect& filled, Qt::Orientation orientation) const = 0;
     virtual void tab(QPainter& p, const QRect& rect, bool selected, const Look& look) const = 0;
+    virtual QColor tabText(bool selected, const Look& look, const QPalette& palette) const;
     virtual void tabPane(QPainter& p, const QWidget* widget, const QRect& rect) const = 0;
     /// Rotary knob; @p value goes 0..1 clockwise from 7:30 to 4:30 (see dialPoint()).
     virtual void dial(QPainter& p, const QRect& rect, qreal value, const Look& look) const = 0;

@@ -22,6 +22,9 @@ qt_add_executable(gallery
   src/themes/emerald/Style.cpp src/themes/emerald/Style.hpp
   src/themes/emerald/Theme.hpp
   src/themes/emerald/widgets/Pixel.cpp src/themes/emerald/widgets/Pixel.hpp
+  src/themes/flat/Entry.cpp
+  src/themes/flat/Style.cpp src/themes/flat/Style.hpp
+  src/themes/flat/Theme.cpp src/themes/flat/Theme.hpp
   src/themes/glass/Entry.cpp
   src/themes/glass/Style.cpp src/themes/glass/Style.hpp
   src/themes/glass/Theme.cpp src/themes/glass/Theme.hpp
