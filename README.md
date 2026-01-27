@@ -13,7 +13,7 @@ them in several interface designs. Pick a design and the whole window restyles a
 - **Telemetry**: LCD numbers and a dial
 - the menu bar, menus, combo box popups, tooltips and the status bar
 
-**Design** (or the Interface menu, Ctrl+1 … 4) selects the interface and remembers the choice;
+**Design** (or the Interface menu, Ctrl+1 … 5) selects the interface and remembers the choice;
 **Disable widgets** shows the disabled states.
 
 ## Designs
@@ -41,6 +41,12 @@ glowing text, LED indicators, VU-meter progress, EQ-style slider thumbs and the 
 The Windows 8 Modern UI: flat and square on a deep `#1d1d1d` canvas, no shadows. Content is chrome, so a
 group is only its large light title; buttons are 2px outlines that invert when pressed; fields, lists and
 menus are white surfaces; LCD displays are accent live tiles and tabs are text headers with an accent bar.
+
+### Revolut (`revolut`)
+
+The Revolut.com interface model in the Idetica identity: a light canvas with large rounded cards that each
+own one accent (violet, indigo, amber, magenta) under an uppercase eyebrow, violet and chip pill buttons,
+white widget surfaces with an amber focus ring, pill tabs, and LCD displays on the dark violet-glow stage.
 
 ## Build & run
 

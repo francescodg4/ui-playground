@@ -29,6 +29,9 @@ qt_add_executable(gallery
   src/themes/metro/Entry.cpp
   src/themes/metro/Style.cpp src/themes/metro/Style.hpp
   src/themes/metro/Theme.cpp src/themes/metro/Theme.hpp
+  src/themes/revolut/Entry.cpp
+  src/themes/revolut/Style.cpp src/themes/revolut/Style.hpp
+  src/themes/revolut/Theme.cpp src/themes/revolut/Theme.hpp
   src/themes/winamp/Entry.cpp
   src/themes/winamp/Style.cpp src/themes/winamp/Style.hpp
   src/themes/winamp/Theme.hpp
