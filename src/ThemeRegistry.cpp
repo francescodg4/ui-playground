@@ -21,6 +21,9 @@ ThemeEntry themeEntry();
 namespace flat {
 ThemeEntry themeEntry();
 }
+namespace claudecode {
+ThemeEntry themeEntry();
+}
 
 namespace Themes {
 
@@ -33,6 +36,7 @@ const QList<ThemeEntry>& all()
         metro::themeEntry(),
         revolut::themeEntry(),
         flat::themeEntry(),
+        claudecode::themeEntry(),
     };
     return themes;
 }

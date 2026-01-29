@@ -18,6 +18,9 @@ qt_add_executable(gallery
   src/ThemeRegistry.cpp src/ThemeRegistry.hpp
   src/WidgetGallery.cpp src/WidgetGallery.hpp
   src/WidgetStyle.cpp src/WidgetStyle.hpp
+  src/themes/claudecode/Entry.cpp
+  src/themes/claudecode/Style.cpp src/themes/claudecode/Style.hpp
+  src/themes/claudecode/Theme.cpp src/themes/claudecode/Theme.hpp
   src/themes/emerald/Entry.cpp
   src/themes/emerald/Style.cpp src/themes/emerald/Style.hpp
   src/themes/emerald/Theme.hpp

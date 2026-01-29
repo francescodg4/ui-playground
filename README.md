@@ -13,7 +13,7 @@ them in several interface designs. Pick a design and the whole window restyles a
 - **Telemetry**: LCD numbers and a dial
 - the menu bar, menus, combo box popups, tooltips and the status bar
 
-**Design** (or the Interface menu, Ctrl+1 … 6) selects the interface and remembers the choice;
+**Design** (or the Interface menu, Ctrl+1 … 7) selects the interface and remembers the choice;
 **Disable widgets** shows the disabled states.
 
 ## Designs
@@ -53,6 +53,12 @@ white widget surfaces with an amber focus ring, pill tabs, and LCD displays on t
 A dark operations console (video-analytics / monitoring dashboard): navy panels with 1px hairlines on a
 black canvas, no gradients or shadows; muted labels and light values; sunken fields and views; docked text
 tabs with a steel-blue indicator; detection green only for check marks, progress and the primary action.
+
+### Claude Code (`claudecode`)
+
+A Claude x VS Code hybrid: square dark chrome in warm neutrals (panels titled like sidebar sections,
+sunken fields, compact trees and tables, flat tabs whose active one carries a coral top border), rich text on
+rounded cream paper, and one coral accent for the primary button, marks, fills, focus and LCD digits.
 
 ## Build & run
 
