@@ -24,6 +24,9 @@ ThemeEntry themeEntry();
 namespace claudecode {
 ThemeEntry themeEntry();
 }
+namespace vscode {
+ThemeEntry themeEntry();
+}
 
 namespace Themes {
 
@@ -37,6 +40,7 @@ const QList<ThemeEntry>& all()
         revolut::themeEntry(),
         flat::themeEntry(),
         claudecode::themeEntry(),
+        vscode::themeEntry(),
     };
     return themes;
 }

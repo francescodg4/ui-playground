@@ -13,7 +13,7 @@ them in several interface designs. Pick a design and the whole window restyles a
 - **Telemetry**: LCD numbers and a dial
 - the menu bar, menus, combo box popups, tooltips and the status bar
 
-**Design** (or the Interface menu, Ctrl+1 … 7) selects the interface and remembers the choice;
+**Design** (or the Interface menu, Ctrl+1 … 8) selects the interface and remembers the choice;
 **Disable widgets** shows the disabled states.
 
 ## Designs
@@ -59,6 +59,12 @@ tabs with a steel-blue indicator; detection green only for check marks, progress
 A Claude x VS Code hybrid: square dark chrome in warm neutrals (panels titled like sidebar sections,
 sunken fields, compact trees and tables, flat tabs whose active one carries a coral top border), rich text on
 rounded cream paper, and one coral accent for the primary button, marks, fills, focus and LCD digits.
+
+### Visual Studio Code (`vscode`)
+
+The Dark+ look: flat grey chrome separated by 1px borders, panels titled like sidebar sections, `#3c3c3c`
+inputs, 22px list rows with the blue selection, tabs rounded at the top, lightly rounded primary / secondary buttons, the
+2px progress bar, and a single blue accent with an always-visible 1px focus ring.
 
 ## Build & run
 
