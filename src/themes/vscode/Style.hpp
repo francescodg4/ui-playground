@@ -17,6 +17,7 @@ public:
 
     // rich text sits on the editor canvas: the text edit gets its own frame
     void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget = nullptr) const override;
+    int pixelMetric(PixelMetric metric, const QStyleOption* option = nullptr, const QWidget* widget = nullptr) const override;
 
     void window(QPainter& p, const QWidget* widget, const QRect& rect) const override;
     void card(QPainter& p, const QWidget* widget, const QRect& rect, const QRect& titleRect, const QString& title) const override;

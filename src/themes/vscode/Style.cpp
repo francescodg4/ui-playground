@@ -129,6 +129,16 @@ void Style::drawPrimitive(PrimitiveElement element, const QStyleOption* option, 
     WidgetStyle::drawPrimitive(element, option, painter, widget);
 }
 
+int Style::pixelMetric(PixelMetric metric, const QStyleOption* option, const QWidget* widget) const
+{
+    if (metric == PM_MenuButtonIndicator) {
+        // the drop-down part of a split button is a square, as in VS Code, so its chevron clears
+        // the separator and the button's inset edge
+        return metrics().control;
+    }
+    return WidgetStyle::pixelMetric(metric, option, widget);
+}
+
 void Style::window(QPainter& p, const QWidget*, const QRect& rect) const
 {
     p.fillRect(rect, Theme::editor);
