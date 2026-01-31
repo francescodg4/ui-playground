@@ -15,6 +15,7 @@
 #include <QSlider>
 #include <QStyleOption>
 #include <QTabBar>
+#include <QTreeView>
 
 #include <cmath>
 
@@ -173,13 +174,23 @@ void WidgetStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* op
     case PE_FrameTabWidget:
         tabPane(*p, widget, option->rect);
         return;
-    case PE_PanelItemViewRow:
-        // the row behind a tree's indentation: only alternate rows are shaded, the selection
-        // shape of the cells alone marks the selected row
-        if (const auto* row = qstyleoption_cast<const QStyleOptionViewItem*>(option); row && (row->features & QStyleOptionViewItem::Alternate)) {
+    case PE_PanelItemViewRow: {
+        // the row behind a tree's indentation: it starts the row's selection shape, which then
+        // continues without a seam into the cells
+        const auto* row = qstyleoption_cast<const QStyleOptionViewItem*>(option);
+        if (row && (row->features & QStyleOptionViewItem::Alternate)) {
             p->fillRect(option->rect, option->palette.brush(QPalette::AlternateBase));
         }
+        if ((option->state & (State_Selected | State_MouseOver)) && look.enabled) {
+            Look selected = look;
+            selected.checked = option->state & State_Selected;
+            p->save();
+            p->setClipRect(option->rect);
+            selection(*p, option->rect.adjusted(0, 0, 32, 0), selected);
+            p->restore();
+        }
         return;
+    }
     case PE_PanelItemViewItem: {
         const auto* item = qstyleoption_cast<const QStyleOptionViewItem*>(option);
         if (item && (item->features & QStyleOptionViewItem::Alternate)) {
@@ -199,6 +210,15 @@ void WidgetStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* op
                 : column == 0    ? QStyleOptionViewItem::Beginning
                 : column == last ? QStyleOptionViewItem::End
                                  : QStyleOptionViewItem::Middle;
+        }
+        // in a tree the first cell continues the indentation's part of the shape
+        if (const auto* tree = qobject_cast<const QTreeView*>(widget); tree && item && item->index.isValid()
+            && (tree->rootIsDecorated() || item->index.parent().isValid())) {
+            if (position == QStyleOptionViewItem::Beginning) {
+                position = QStyleOptionViewItem::Middle;
+            } else if (position == QStyleOptionViewItem::OnlyOne) {
+                position = QStyleOptionViewItem::End;
+            }
         }
         QRect shape = option->rect;
         if (position == QStyleOptionViewItem::Middle || position == QStyleOptionViewItem::End) {
