@@ -3,6 +3,7 @@
 #include <QMainWindow>
 #include <QTimer>
 
+class QAction;
 class QActionGroup;
 class QCheckBox;
 class QComboBox;
@@ -24,6 +25,9 @@ public:
     QString theme() const { return m_theme; }
     /// Draws the application's standard widgets with the design of theme @p id.
     void setTheme(const QString& id);
+    /// Uses the dark mode of the designs that have one.
+    void setDark(bool dark);
+    bool dark() const { return m_dark; }
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -43,6 +47,9 @@ private:
     QComboBox* m_selector = nullptr;
     QLabel* m_description = nullptr;
     QCheckBox* m_disable = nullptr;
+    QCheckBox* m_darkMode = nullptr;
+    QAction* m_darkAction = nullptr;
+    bool m_dark = false;
     QActionGroup* m_themeActions = nullptr;
     QList<QGroupBox*> m_boxes; ///< the showcase, disabled together
     QListWidget* m_list = nullptr;

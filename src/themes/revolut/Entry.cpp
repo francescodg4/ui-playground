@@ -12,6 +12,7 @@ ThemeEntry themeEntry()
         QCoreApplication::translate("Themes", "Revolut"),
         QCoreApplication::translate("Themes", "Fintech app widgets in violet: tinted cards with one accent each, pill buttons, an amber focus ring and dark stages."),
         []() -> WidgetStyle* { return new Style; },
+        nullptr,
     };
 }
 

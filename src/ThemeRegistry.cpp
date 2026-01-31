@@ -27,6 +27,9 @@ ThemeEntry themeEntry();
 namespace vscode {
 ThemeEntry themeEntry();
 }
+namespace proxmox {
+ThemeEntry themeEntry();
+}
 
 namespace Themes {
 
@@ -41,6 +44,7 @@ const QList<ThemeEntry>& all()
         flat::themeEntry(),
         claudecode::themeEntry(),
         vscode::themeEntry(),
+        proxmox::themeEntry(),
     };
     return themes;
 }
@@ -64,6 +68,16 @@ QString saved()
 void save(const QString& id)
 {
     QSettings().setValue(QStringLiteral("theme"), id);
+}
+
+bool savedDark()
+{
+    return QSettings().value(QStringLiteral("dark"), false).toBool();
+}
+
+void saveDark(bool dark)
+{
+    QSettings().setValue(QStringLiteral("dark"), dark);
 }
 
 } // namespace Themes

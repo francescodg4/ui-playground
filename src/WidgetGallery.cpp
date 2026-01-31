@@ -68,6 +68,9 @@ WidgetGallery::WidgetGallery(QWidget* parent)
     }
 
     QMenu* view = menuBar()->addMenu(tr("&View"));
+    m_darkAction = view->addAction(tr("Dar&k mode"));
+    m_darkAction->setCheckable(true);
+    m_darkAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
     QAction* disable = view->addAction(tr("&Disable widgets"));
     disable->setCheckable(true);
 
@@ -101,6 +104,15 @@ WidgetGallery::WidgetGallery(QWidget* parent)
     connect(disable, &QAction::toggled, m_disable, &QCheckBox::setChecked);
     connect(m_disable, &QCheckBox::toggled, this, [this](bool on) { setWidgetsEnabled(!on); });
 
+    // dark mode: the user's choice is applied and remembered
+    m_dark = Themes::savedDark();
+    const auto chooseDark = [this](bool on) {
+        setDark(on);
+        Themes::saveDark(on);
+    };
+    connect(m_darkMode, &QCheckBox::toggled, this, chooseDark);
+    connect(m_darkAction, &QAction::triggered, this, chooseDark);
+
     connect(&m_ticker, &QTimer::timeout, this, [this] {
         m_clock->display(QTime::currentTime().toString(QStringLiteral("hh:mm:ss")));
         m_scan->setValue((m_scan->value() + 3) % 101);
@@ -118,7 +130,8 @@ void WidgetGallery::setTheme(const QString& id)
         return;
     }
     m_theme = id;
-    WidgetStyle* style = theme->widgetStyle();
+    const bool dark = m_dark && theme->darkStyle;
+    WidgetStyle* style = dark ? theme->darkStyle() : theme->widgetStyle();
     QApplication::setStyle(style); // the application owns it (and deletes the previous one)
     QApplication::setPalette(style->standardPalette());
     QApplication::setFont(style->font());
@@ -130,10 +143,28 @@ void WidgetGallery::setTheme(const QString& id)
     for (QAction* action : m_themeActions->actions()) {
         action->setChecked(action->data().toString() == id);
     }
+    // the dark mode switch applies to the designs that have one
+    {
+        const QSignalBlocker blockBox(m_darkMode);
+        const QSignalBlocker blockAction(m_darkAction);
+        m_darkMode->setChecked(dark); // the preference is kept for the designs that have a dark mode
+        m_darkAction->setChecked(dark);
+    }
+    m_darkMode->setEnabled(theme->darkStyle != nullptr);
+    m_darkAction->setEnabled(theme->darkStyle != nullptr);
+    m_darkMode->setToolTip(theme->darkStyle ? tr("Switch this design between light and dark (Ctrl+D)") : tr("This design has no dark mode"));
     m_description->setText(theme->description);
-    statusBar()->showMessage(tr("Interface: %1").arg(theme->name));
+    statusBar()->showMessage(dark ? tr("Interface: %1 (dark)").arg(theme->name) : tr("Interface: %1").arg(theme->name));
     tintIcons();
     update();
+}
+
+void WidgetGallery::setDark(bool dark)
+{
+    m_dark = dark;
+    if (!m_theme.isEmpty()) {
+        setTheme(m_theme);
+    }
 }
 
 void WidgetGallery::select(const QString& id)
@@ -180,12 +211,13 @@ QGroupBox* WidgetGallery::interfaceBox()
     for (const ThemeEntry& theme : Themes::all()) {
         m_selector->addItem(theme.name, theme.id);
     }
-    m_selector->setToolTip(tr("The design used to draw every widget (Ctrl+1, 2, 3)"));
+    m_selector->setToolTip(tr("The design used to draw every widget (Ctrl+1 … 9)"));
     connect(m_selector, &QComboBox::currentIndexChanged, this, [this] { select(m_selector->currentData().toString()); });
 
     m_description = new QLabel;
     m_description->setWordWrap(true);
     m_disable = new QCheckBox(tr("Disable widgets"));
+    m_darkMode = new QCheckBox(tr("Dark mode"));
 
     auto* layout = new QHBoxLayout(box);
     layout->addWidget(new QLabel(tr("Design")));
@@ -193,6 +225,7 @@ QGroupBox* WidgetGallery::interfaceBox()
     layout->addSpacing(8);
     layout->addWidget(m_description, 1);
     layout->addSpacing(8);
+    layout->addWidget(m_darkMode);
     layout->addWidget(m_disable);
     return box;
 }

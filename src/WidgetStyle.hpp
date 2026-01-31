@@ -34,6 +34,7 @@ public:
         int arrow = 10; ///< arrows of combo and spin boxes
         int groove = 6; ///< slider track thickness
         int scroll = 10; ///< scroll bar thickness
+        bool scrollArrows = false; ///< scroll bars have a square step button at each end
         int tab = 30; ///< tab height
         int title = 30; ///< group box title band
         int row = 24; ///< minimum height of an item view row

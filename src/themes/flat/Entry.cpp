@@ -12,6 +12,7 @@ ThemeEntry themeEntry()
         QCoreApplication::translate("Themes", "Flat"),
         QCoreApplication::translate("Themes", "Dark operations console: navy hairline panels on black, muted labels and light values, docked tabs, one signal green."),
         []() -> WidgetStyle* { return new Style; },
+        nullptr,
     };
 }
 

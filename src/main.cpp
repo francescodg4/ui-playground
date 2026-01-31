@@ -24,8 +24,9 @@ int main(int argc, char* argv[])
     parser.addHelpOption();
     parser.addVersionOption();
     const QCommandLineOption themeOption("theme", QStringLiteral("Interface to use: %1 (default: the last one selected).").arg(ids.join(QStringLiteral(", "))), "id");
+    const QCommandLineOption darkOption("dark", "Use the dark mode of the designs that have one.");
     const QCommandLineOption screenshotOption("screenshot", "Save the window as gallery-<theme>.png in <dir> and quit; --theme all saves every interface.", "dir");
-    parser.addOptions({ themeOption, screenshotOption });
+    parser.addOptions({ themeOption, darkOption, screenshotOption });
     parser.process(app);
 
     const QString requested = parser.value(themeOption);
@@ -36,6 +37,9 @@ int main(int argc, char* argv[])
     const QStringList themes = requested == QLatin1String("all") ? ids : QStringList { requested.isEmpty() ? Themes::saved() : requested };
 
     WidgetGallery gallery;
+    if (parser.isSet(darkOption)) {
+        gallery.setDark(true);
+    }
     gallery.setTheme(themes.first());
     gallery.show();
 
@@ -50,7 +54,8 @@ int main(int argc, char* argv[])
                 while (settle.elapsed() < 200) {
                     QApplication::processEvents(QEventLoop::AllEvents, 20);
                 }
-                gallery.grab().save(dir.filePath(QStringLiteral("gallery-%1.png").arg(id)));
+                const bool dark = gallery.dark() && Themes::find(id)->darkStyle;
+                gallery.grab().save(dir.filePath(QStringLiteral("gallery-%1%2.png").arg(id, dark ? QStringLiteral("-dark") : QString())));
             }
             QApplication::quit();
         });

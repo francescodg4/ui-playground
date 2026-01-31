@@ -12,6 +12,7 @@ ThemeEntry themeEntry()
         QCoreApplication::translate("Themes", "Visual Studio Code"),
         QCoreApplication::translate("Themes", "Dark+: flat grey chrome with 1px borders, 22px rows, lightly rounded controls and one blue accent."),
         []() -> WidgetStyle* { return new Style; },
+        nullptr,
     };
 }
 

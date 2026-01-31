@@ -35,6 +35,9 @@ qt_add_executable(gallery
   src/themes/metro/Entry.cpp
   src/themes/metro/Style.cpp src/themes/metro/Style.hpp
   src/themes/metro/Theme.cpp src/themes/metro/Theme.hpp
+  src/themes/proxmox/Entry.cpp
+  src/themes/proxmox/Style.cpp src/themes/proxmox/Style.hpp
+  src/themes/proxmox/Theme.cpp src/themes/proxmox/Theme.hpp
   src/themes/revolut/Entry.cpp
   src/themes/revolut/Style.cpp src/themes/revolut/Style.hpp
   src/themes/revolut/Theme.cpp src/themes/revolut/Theme.hpp

@@ -12,6 +12,7 @@ ThemeEntry themeEntry()
         QCoreApplication::translate("Themes", "Emerald"),
         QCoreApplication::translate("Themes", "GBA-era storage box: pixel grid, box banners, capsule keys, lined-paper fields and an HP-bar progress."),
         []() -> WidgetStyle* { return new Style; },
+        nullptr,
     };
 }
 

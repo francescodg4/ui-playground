@@ -40,17 +40,27 @@ QRect centred(const QRect& area, int size)
     return r;
 }
 
+/// Where a scroll bar's handle travels: the whole bar, or the part between its step buttons.
+QRect scrollTrack(const QStyleOptionSlider* s, bool arrows)
+{
+    if (!arrows) {
+        return s->rect;
+    }
+    return s->orientation == Qt::Horizontal ? s->rect.adjusted(s->rect.height(), 0, -s->rect.height(), 0)
+                                            : s->rect.adjusted(0, s->rect.width(), 0, -s->rect.width());
+}
+
 /// Handle of a scroll bar: its length is proportional to the visible page.
-QRect scrollHandle(const QStyleOptionSlider* s, int minLength)
+QRect scrollHandle(const QStyleOptionSlider* s, const QRect& track, int minLength)
 {
     const bool horizontal = s->orientation == Qt::Horizontal;
-    const int length = horizontal ? s->rect.width() : s->rect.height();
+    const int length = horizontal ? track.width() : track.height();
     const qint64 range = qint64(s->maximum) - s->minimum;
     int handle = range > 0 ? int(qint64(s->pageStep) * length / (range + s->pageStep)) : length;
     handle = std::clamp(handle, std::min(minLength, length), length);
     const int pos = QStyle::sliderPositionFromValue(s->minimum, s->maximum, s->sliderPosition, length - handle, s->upsideDown);
-    return horizontal ? QRect(s->rect.left() + pos, s->rect.top(), handle, s->rect.height())
-                      : QRect(s->rect.left(), s->rect.top() + pos, s->rect.width(), handle);
+    return horizontal ? QRect(track.left() + pos, track.top(), handle, track.height())
+                      : QRect(track.left(), track.top() + pos, track.width(), handle);
 }
 
 int arrowWidth(const QRect& rect)
@@ -443,7 +453,7 @@ void WidgetStyle::drawComplexControl(ComplexControl control, const QStyleOptionC
             Look h = look;
             h.hover = look.hover && (s->activeSubControls & SC_ScrollBarSlider);
             h.pressed = look.enabled && (s->state & State_Sunken) && (s->activeSubControls & SC_ScrollBarSlider);
-            scrollBar(*p, s->rect, scrollHandle(s, pixelMetric(PM_ScrollBarSliderMin)), s->orientation, h);
+            scrollBar(*p, s->rect, scrollHandle(s, scrollTrack(s, m.scrollArrows), pixelMetric(PM_ScrollBarSliderMin)), s->orientation, h);
             return;
         }
         break;
@@ -554,20 +564,29 @@ QRect WidgetStyle::subControlRect(ComplexControl control, const QStyleOptionComp
         break;
     case CC_ScrollBar:
         if (const auto* s = qstyleoption_cast<const QStyleOptionSlider*>(option)) {
-            // no step buttons: the groove is the whole bar
-            const QRect knob = scrollHandle(s, pixelMetric(PM_ScrollBarSliderMin));
+            // the groove is where the handle travels: the whole bar, or between the step buttons
+            const QRect track = scrollTrack(s, m.scrollArrows);
+            const QRect knob = scrollHandle(s, track, pixelMetric(PM_ScrollBarSliderMin));
             const bool horizontal = s->orientation == Qt::Horizontal;
             switch (sc) {
             case SC_ScrollBarGroove:
-                return r;
+                return track;
             case SC_ScrollBarSlider:
                 return knob;
             case SC_ScrollBarSubPage:
-                return horizontal ? QRect(r.left(), r.top(), knob.left() - r.left(), r.height()) : QRect(r.left(), r.top(), r.width(), knob.top() - r.top());
+                return horizontal ? QRect(track.left(), r.top(), knob.left() - track.left(), r.height()) : QRect(r.left(), track.top(), r.width(), knob.top() - track.top());
             case SC_ScrollBarAddPage:
-                return horizontal ? QRect(knob.right() + 1, r.top(), r.right() - knob.right(), r.height()) : QRect(r.left(), knob.bottom() + 1, r.width(), r.bottom() - knob.bottom());
-            case SC_ScrollBarAddLine:
+                return horizontal ? QRect(knob.right() + 1, r.top(), track.right() - knob.right(), r.height()) : QRect(r.left(), knob.bottom() + 1, r.width(), track.bottom() - knob.bottom());
             case SC_ScrollBarSubLine:
+                if (!m.scrollArrows) {
+                    return {};
+                }
+                return horizontal ? QRect(r.left(), r.top(), track.left() - r.left(), r.height()) : QRect(r.left(), r.top(), r.width(), track.top() - r.top());
+            case SC_ScrollBarAddLine:
+                if (!m.scrollArrows) {
+                    return {};
+                }
+                return horizontal ? QRect(track.right() + 1, r.top(), r.right() - track.right(), r.height()) : QRect(r.left(), track.bottom() + 1, r.width(), r.bottom() - track.bottom());
             case SC_ScrollBarFirst:
             case SC_ScrollBarLast:
                 return {};

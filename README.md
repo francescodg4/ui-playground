@@ -13,8 +13,9 @@ them in several interface designs. Pick a design and the whole window restyles a
 - **Telemetry**: LCD numbers and a dial
 - the menu bar, menus, combo box popups, tooltips and the status bar
 
-**Design** (or the Interface menu, Ctrl+1 … 8) selects the interface and remembers the choice;
-**Disable widgets** shows the disabled states.
+**Design** (or the Interface menu, Ctrl+1 … 9) selects the interface and remembers the choice;
+**Dark mode** (Ctrl+D) switches the designs that have one between light and dark; **Disable widgets** shows
+the disabled states.
 
 ## Designs
 
@@ -66,6 +67,13 @@ The Dark+ look: flat grey chrome separated by 1px borders, panels titled like si
 inputs, 22px list rows with the blue selection, tabs rounded at the top, lightly rounded primary / secondary buttons, the
 2px progress bar, and a single blue accent with an always-visible 1px focus ring.
 
+### Proxmox (`proxmox`)
+
+The Proxmox VE web console (ExtJS Crisp): square white panels with a pale header strip and a blue title on a
+light-grey page, white toolbar buttons and fields with 2px radii, solid-blue primary actions and active tabs,
+the resource tree's outlined selection, thin usage bars with the label above, and scroll bars with step
+buttons. It has a dark mode that keeps the structure and the blue accent on dark-grey surfaces.
+
 ## Build & run
 
 ```bash
@@ -80,6 +88,7 @@ Requires Qt ≥ 6.4 (Widgets). Nothing else is downloaded.
 | Option | |
 |---|---|
 | `--theme <id>` | design to use (see above); the default is the last one selected |
+| `--dark` | use the dark mode of the designs that have one |
 | `--screenshot <dir>` | save the window as `gallery-<theme>.png` and quit; `--theme all` saves every design; works with `-platform offscreen` |
 
 ## Code
