@@ -1,6 +1,7 @@
 #pragma once
 
 #include "WidgetStyle.hpp"
+#include "themes/revolut/Theme.hpp"
 
 #include <QHash>
 
@@ -9,9 +10,10 @@ namespace revolut {
 /// The standard widgets as Revolut.com app widgets in the Idetica identity: pastel-tinted cards that
 /// each own one accent under an uppercase eyebrow, violet and chip pill buttons, white widget
 /// surfaces with an amber focus ring, pill tabs, and LCD displays on the dark violet-glow stage.
+/// It comes in the light identity and its dark mode.
 class Style : public WidgetStyle {
 public:
-    Style();
+    explicit Style(bool dark = false);
 
     QFont font() const override;
     QPalette standardPalette() const override;
@@ -44,6 +46,7 @@ public:
     void tooltip(QPainter& p, const QRect& rect) const override;
 
 private:
+    const Theme::Colors& c;
     mutable QHash<QString, int> m_accents; ///< card title -> its accent, in order of appearance
 };
 

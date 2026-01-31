@@ -56,8 +56,12 @@ menus are white surfaces; LCD displays are accent live tiles and tabs are text h
 The Revolut.com interface model in the Idetica identity: a light canvas with large rounded cards that each
 own one accent (violet, indigo, amber, magenta) under an uppercase eyebrow, violet and chip pill buttons,
 white widget surfaces with an amber focus ring, pill tabs, and LCD displays on the dark violet-glow stage.
+Its dark mode follows the identity's dark column: a near-black canvas, deep violet-grey cards with dark
+tints, a brighter violet, and translucent-white secondary buttons.
 
-![Revolut](docs/screenshots/revolut.png)
+![Revolut, light](docs/screenshots/revolut.png)
+
+![Revolut, dark](docs/screenshots/revolut-dark.png)
 
 ### Flat (`flat`)
 
