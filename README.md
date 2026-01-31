@@ -111,6 +111,36 @@ Requires Qt ≥ 6.4 (Widgets). Nothing else is downloaded.
 | `--dark` | use the dark mode of the designs that have one |
 | `--screenshot <dir>` | save the window as `gallery-<theme>.png` and quit; `--theme all` saves every design; works with `-platform offscreen` |
 
+## Packaging
+
+`cpack` makes a self-contained package: the application with the Qt libraries and plugins it loads and the
+libraries they need, so it runs where Qt is not installed.
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+cd build && cpack
+```
+
+| Platform | Packages | Deployment |
+|---|---|---|
+| Linux | `widget-gallery-<version>-Linux.tar.gz`, `widget-gallery_<version>_amd64.deb` | [cmake/DeployLinux.cmake](cmake/DeployLinux.cmake) |
+| Windows | `.zip` | Qt's `windeployqt` |
+| macOS | `.dmg` | Qt's `macdeployqt` |
+
+On Linux the package holds `bin/gallery` (a launcher), `libexec/gallery` with a `qt.conf`, the bundled
+libraries in `lib/` and the Qt plugins in `plugins/` (X11 with its GLX / EGL integrations, offscreen,
+minimal, compose input). Run `bin/gallery` from the extracted archive; the `.deb` installs it as
+`/opt/widget-gallery/bin/gallery`. Only the libraries every desktop provides come from the system, and the
+`.deb` depends on them: glibc and libstdc++, OpenGL / EGL, the X11 and xcb client libraries, fontconfig,
+freetype, zlib and expat. A package runs on distributions as recent as the one it was built on (glibc).
+
+With the project's Docker image (see `.devcontainer`), the packages land in `dist/`:
+
+```bash
+docker run --rm -v "$PWD:/src:ro" -v "$PWD/dist:/out" qt6-opencv:v1.0 bash -c   "cmake -S /src -B /tmp/build && cmake --build /tmp/build -j && cd /tmp/build && cpack && cp *.tar.gz *.deb /out"
+```
+
 ## Code
 
 ```
@@ -127,6 +157,10 @@ src/
     Style               the design's WidgetStyle
     Theme               its design tokens
     widgets/            its drawing helpers (Glass, Pixel, Metal)
+cmake/
+  DeployLinux.cmake     bundles the Qt plugins and the libraries the application needs (Linux)
+  linux/                the launcher and the qt.conf of the Linux package
+  CPackOptions.cmake    per-generator CPack settings
 ```
 
 Adding a design means adding a folder under `themes/` with an `Entry.cpp` and a `Style`, and one line in

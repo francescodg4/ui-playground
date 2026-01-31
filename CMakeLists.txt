@@ -58,4 +58,50 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 set_target_properties(gallery PROPERTIES WIN32_EXECUTABLE ON MACOSX_BUNDLE ON)
-install(TARGETS gallery RUNTIME DESTINATION bin BUNDLE DESTINATION .)
+
+# ---- installation and packaging ------------------------------------------------------------------
+# `cmake --install` and `cpack` produce a self-contained application: the executable with the Qt
+# libraries and plugins it loads and the libraries they need, so it runs where Qt is not installed.
+
+if(WIN32 OR APPLE)
+  # Qt's own deployment (windeployqt / macdeployqt)
+  install(TARGETS gallery RUNTIME DESTINATION bin BUNDLE DESTINATION .)
+  if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5)
+    qt_generate_deploy_app_script(TARGET gallery OUTPUT_SCRIPT deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
+  else()
+    qt_generate_deploy_app_script(TARGET gallery FILENAME_VARIABLE deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
+  endif()
+  install(SCRIPT ${deploy_script})
+else()
+  include(cmake/DeployLinux.cmake)
+  gallery_deploy_linux(gallery PLUGINS
+    Qt6::QXcbIntegrationPlugin             # X11
+    Qt6::QXcbGlxIntegrationPlugin
+    Qt6::QXcbEglIntegrationPlugin
+    Qt6::QOffscreenIntegrationPlugin       # -platform offscreen (screenshots)
+    Qt6::QMinimalIntegrationPlugin
+    Qt6::QComposePlatformInputContextPlugin # dead keys and compose sequences
+  )
+endif()
+
+set(CPACK_PACKAGE_NAME "widget-gallery")
+set(CPACK_PACKAGE_VENDOR "Francesco de Gioia")
+set(CPACK_PACKAGE_CONTACT "Francesco de Gioia <francescodg4@gmail.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The standard Qt widgets in nine interface designs")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Widget Gallery")
+set(CPACK_PACKAGE_EXECUTABLES "gallery;Widget Gallery")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+set(CPACK_STRIP_FILES ON)
+set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPackOptions.cmake")
+if(WIN32)
+  set(CPACK_GENERATOR "ZIP")
+elseif(APPLE)
+  set(CPACK_GENERATOR "DragNDrop")
+else()
+  set(CPACK_GENERATOR "TGZ;DEB")
+  # what the bundle expects from the system (see cmake/DeployLinux.cmake)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libstdc++6, libgl1, libegl1, libopengl0, libx11-6, libx11-xcb1, libxcb1, libfontconfig1, libfreetype6, zlib1g, libexpat1")
+  set(CPACK_DEBIAN_PACKAGE_SECTION "graphics")
+  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+endif()
+include(CPack)

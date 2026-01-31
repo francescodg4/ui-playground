@@ -1,6 +1,9 @@
 # Text files: LF in the repository, CRLF in the working tree.
 * text=auto eol=crlf
 
+# Shell scripts run inside Linux containers and packages: always LF
+*.sh text eol=lf
+
 # Binary assets
 *.png binary
 *.jpg binary
