@@ -72,7 +72,7 @@ Style::Style()
         m.control = 26;
         m.padding = 12;
         m.frame = 1;
-        m.indicator = 18;
+        m.indicator = 22; // an 18px box plus room for its focus ring
         m.arrow = 10;
         m.groove = 4;
         m.scroll = 10;
