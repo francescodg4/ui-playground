@@ -26,16 +26,22 @@ Each design draws the widgets through its own `QStyle`, following its own design
 Frosted cards over an ambient canvas that they blur and refract, recessed glass fields, clay buttons and
 knobs that compress when pressed, and glows instead of outlines for active states.
 
+![Liquid Glass](docs/screenshots/glass.png)
+
 ### Emerald (`emerald`)
 
 A GBA-era storage-box system (Pokémon Emerald), drawn on a pixel grid scaled up 2× with no smoothing:
 cards under pill-shaped box banners on a tiled wallpaper, capsule keys that sink into their hard shadow,
 lined-paper fields, an HP-bar progress, a CRT display and highlighted tiles for selection.
 
+![Emerald](docs/screenshots/emerald.png)
+
 ### Winamp (`winamp`)
 
 The Winamp Modern skin: brushed metal, capsule buttons, fields and views behind cobalt LCD glass with
 glowing text, LED indicators, VU-meter progress, EQ-style slider thumbs and the skin's slanted tabs.
+
+![Winamp](docs/screenshots/winamp.png)
 
 ### Metro (`metro`)
 
@@ -43,11 +49,15 @@ The Windows 8 Modern UI: flat and square on a deep `#1d1d1d` canvas, no shadows.
 group is only its large light title; buttons are 2px outlines that invert when pressed; fields, lists and
 menus are white surfaces; LCD displays are accent live tiles and tabs are text headers with an accent bar.
 
+![Metro](docs/screenshots/metro.png)
+
 ### Revolut (`revolut`)
 
 The Revolut.com interface model in the Idetica identity: a light canvas with large rounded cards that each
 own one accent (violet, indigo, amber, magenta) under an uppercase eyebrow, violet and chip pill buttons,
 white widget surfaces with an amber focus ring, pill tabs, and LCD displays on the dark violet-glow stage.
+
+![Revolut](docs/screenshots/revolut.png)
 
 ### Flat (`flat`)
 
@@ -55,11 +65,15 @@ A dark operations console (video-analytics / monitoring dashboard): navy panels 
 black canvas, no gradients or shadows; muted labels and light values; sunken fields and views; docked text
 tabs with a steel-blue indicator; detection green only for check marks, progress and the primary action.
 
+![Flat](docs/screenshots/flat.png)
+
 ### Claude Code (`claudecode`)
 
 A Claude x VS Code hybrid: square dark chrome in warm neutrals (panels titled like sidebar sections,
 sunken fields, compact trees and tables, flat tabs whose active one carries a coral top border), rich text on
 rounded cream paper, and one coral accent for the primary button, marks, fills, focus and LCD digits.
+
+![Claude Code](docs/screenshots/claudecode.png)
 
 ### Visual Studio Code (`vscode`)
 
@@ -67,12 +81,18 @@ The Dark+ look: flat grey chrome separated by 1px borders, panels titled like si
 inputs, 22px list rows with the blue selection, tabs rounded at the top, lightly rounded primary / secondary buttons, the
 2px progress bar, and a single blue accent with an always-visible 1px focus ring.
 
+![Visual Studio Code](docs/screenshots/vscode.png)
+
 ### Proxmox (`proxmox`)
 
 The Proxmox VE web console (ExtJS Crisp): square white panels with a pale header strip and a blue title on a
 light-grey page, white toolbar buttons and fields with 2px radii, solid-blue primary actions and active tabs,
 the resource tree's outlined selection, thin usage bars with the label above, and scroll bars with step
 buttons. It has a dark mode that keeps the structure and the blue accent on dark-grey surfaces.
+
+![Proxmox, light](docs/screenshots/proxmox.png)
+
+![Proxmox, dark](docs/screenshots/proxmox-dark.png)
 
 ## Build & run
 
