@@ -168,8 +168,8 @@ void Style::card(QPainter& p, const QWidget*, const QRect& rect, const QRect& ti
 void Style::button(QPainter& p, const QRect& rect, Button kind, const Look& look) const
 {
     const QRectF r = QRectF(rect).adjusted(1, 1, -1, -1);
-    if (kind == Button::Default) {
-        // the primary action (Create VM / Create CT)
+    if (kind == Button::Default || (look.checked && kind != Button::Flat)) {
+        // the primary action (Create VM / Create CT), and a toggle that is on: the highlight blue
         const QColor fill = !look.enabled ? c.accentDisabled : look.pressed ? c.accentPressed : look.hover ? c.accentHover : c.accent;
         control(p, r, fill, QColor());
         if (look.focus) {
@@ -183,12 +183,8 @@ void Style::button(QPainter& p, const QRect& rect, Button kind, const Look& look
             control(p, r, look.pressed || look.checked ? c.buttonPressed : c.buttonHover, QColor());
         }
     } else {
-        const QColor fill = !look.enabled ? c.buttonDisabled : look.pressed || look.checked ? c.buttonPressed : look.hover ? c.buttonHover : c.button;
-        control(p, r, fill, look.checked && look.enabled ? c.borderHover : c.buttonBorder);
-        if (look.checked && look.enabled) {
-            // pressed in: a shade along the top inner edge
-            p.fillRect(QRectF(r.left() + 2, r.top() + 1, r.width() - 4, 1), c.borderHover);
-        }
+        const QColor fill = !look.enabled ? c.buttonDisabled : look.pressed ? c.buttonPressed : look.hover ? c.buttonHover : c.button;
+        control(p, r, fill, c.buttonBorder);
     }
     if (look.focus) {
         control(p, r, QColor(), c.accent);
@@ -197,7 +193,7 @@ void Style::button(QPainter& p, const QRect& rect, Button kind, const Look& look
 
 QColor Style::buttonText(Button kind, const Look& look, const QPalette&) const
 {
-    if (kind == Button::Default) {
+    if (kind == Button::Default || (look.checked && kind != Button::Flat)) {
         return look.enabled ? QColor(Qt::white) : c.surface;
     }
     return look.enabled ? c.text : c.textDisabled;
